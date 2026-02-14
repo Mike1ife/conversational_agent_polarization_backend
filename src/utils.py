@@ -1,3 +1,4 @@
+import os
 import random
 import string
 from datetime import datetime, timezone
@@ -6,7 +7,7 @@ from pymongo.mongo_client import MongoClient
 from src.schema import UserState
 
 # Connection
-uri = ""
+uri = os.getenv("MONGODB_URI")
 client = MongoClient(uri)
 
 # Create db and collection at first insertion
