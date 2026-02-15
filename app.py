@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from src.utils import study_id_is_valid, advance_user_state
+from src.utils import study_id_is_valid, get_user_state, advance_user_state
 from src.schema import UserState
 
 
@@ -31,6 +31,12 @@ def validate_study_id(study_id: str):
         return {"message": "Study ID Found"}
     else:
         raise HTTPException(status_code=404, detail="Study ID Not Found")
+
+
+@app.get("/state/{study_id}", tags=["General"])
+def get_user_state_route(study_id: str):
+    curr_state = get_user_state(study_id=study_id)
+    return curr_state.model_dump(by_alias=True)
 
 
 @app.post("/advance/{study_id}", tags=["General"])
