@@ -1,7 +1,6 @@
 import os
 import random
 import string
-from zoneinfo import ZoneInfo
 from datetime import datetime, timezone
 from pymongo.mongo_client import MongoClient
 
@@ -23,8 +22,8 @@ def generate_users(count: int):
                 random.choices(string.ascii_uppercase + string.digits, k=6)
             ),
             "state": "not_started",
-            "created_at": datetime.now(ZoneInfo("US/Eastern")),
-            "updated_at": datetime.now(ZoneInfo("US/Eastern")),
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
         }
         for _ in range(count)
     )
