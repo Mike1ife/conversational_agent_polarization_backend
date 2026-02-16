@@ -36,7 +36,7 @@ def advance_user_state(study_id: str, next_state: UserState):
 
 
 def save_pre_survey(study_id: str, survey_responses: SurveyResponses):
-    user_docs.insert_one(
+    user_docs.update_one(
         {"study_id": study_id},
         {
             "$set": {"pre_survey": survey_responses.responses},
