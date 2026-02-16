@@ -13,7 +13,7 @@ app = FastAPI()
 
 origins = [
     "http://localhost:3000",
-    "https://conversational-agent-polarization.vercel.app/",
+    "https://conversational-agent-polarization.vercel.app",
 ]
 
 app.add_middleware(
