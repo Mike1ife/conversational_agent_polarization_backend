@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
-from typing import List, Optional, Dict, Literal, Union
+from typing import Dict, Literal
 
 
 class CaseModel(BaseModel):
@@ -11,3 +11,7 @@ class UserState(CaseModel):
     state: Literal[
         "not_started", "pre_survey", "intervention", "post_survey", "complete"
     ]
+
+
+class SurveyResponses(CaseModel):
+    responses: Dict[str, str]

@@ -4,7 +4,7 @@ import string
 from datetime import datetime, timezone
 from pymongo.mongo_client import MongoClient
 
-from src.schema import UserState
+from src.schema import UserState, SurveyResponses
 
 # Connection
 uri = os.getenv("MONGODB_URI")
@@ -29,7 +29,17 @@ def get_user_state(study_id: str) -> UserState:
 
 
 def advance_user_state(study_id: str, next_state: UserState):
-    user_docs.find_one_and_update(
+    user_docs.update_one(
         {"study_id": study_id},
         {"$set": {"state": next_state.state}, "$currentDate": {"updated_at": True}},
+    )
+
+
+def save_pre_survey(study_id: str, survey_responses: SurveyResponses):
+    user_docs.insert_one(
+        {"study_id": study_id},
+        {
+            "$set": {"pre_survey": survey_responses.responses},
+            "$currentDate": {"updated_at": True},
+        },
     )

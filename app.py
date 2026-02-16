@@ -1,7 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from src.utils import study_id_is_valid, get_user_state, advance_user_state
-from src.schema import UserState
+from src.utils import (
+    study_id_is_valid,
+    get_user_state,
+    advance_user_state,
+    save_pre_survey,
+)
+from src.schema import UserState, SurveyResponses
 
 
 app = FastAPI()
@@ -43,3 +48,9 @@ def get_user_state_route(study_id: str):
 def advance_user_state_route(study_id: str, next_state: UserState):
     advance_user_state(study_id=study_id, next_state=next_state)
     return {"message": "Advance User State Successfully"}
+
+
+@app.post("/survey/pre/{study_id}", tags=["Pre-Survey"])
+def save_pre_survey_route(study_id: str, survey_responses: SurveyResponses):
+    save_pre_survey(study_id=study_id, survey_responses=survey_responses)
+    return {"message": "Save Pre-Survey Responses Successfully"}
