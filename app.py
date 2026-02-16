@@ -31,7 +31,7 @@ def read_root():
     return {"message": "Hello from FastAPI on Vercel"}
 
 
-@app.get("/generate/{count}", tags=["Admin"])
+@app.post("/generate/{count}", tags=["Admin"])
 def generate_users_route(count: int):
     generate_users(count=count)
     return {"message": "Generate Users Successfully"}
