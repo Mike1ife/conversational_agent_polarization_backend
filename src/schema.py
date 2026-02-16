@@ -9,7 +9,7 @@ class CaseModel(BaseModel):
 
 class UserState(CaseModel):
     state: Literal[
-        "not_started", "pre_survey", "intervention", "post_survey", "complete"
+        "not_started", "pre_survey", "conversation", "post_survey", "complete"
     ]
 
 
