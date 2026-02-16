@@ -1,6 +1,7 @@
 import os
 import random
 import string
+from zoneinfo import ZoneInfo
 from datetime import datetime, timezone
 from pymongo.mongo_client import MongoClient
 
@@ -13,6 +14,20 @@ client = MongoClient(uri)
 # Create db and collection at first insertion
 db = client["study_db"]
 user_docs = db["users"]
+
+
+def generate_users(count: int):
+    user_docs.insert_many(
+        {
+            "study_id": "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=6)
+            ),
+            "state": "not_started",
+            "created_at": datetime.now(ZoneInfo("US/Eastern")),
+            "updated_at": datetime.now(ZoneInfo("US/Eastern")),
+        }
+        for _ in range(count)
+    )
 
 
 def study_id_is_valid(study_id: str) -> bool:

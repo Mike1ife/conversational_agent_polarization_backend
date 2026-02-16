@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from src.utils import (
+    generate_users,
     study_id_is_valid,
     get_user_state,
     advance_user_state,
@@ -28,6 +29,12 @@ app.add_middleware(
 @app.get("/")
 def read_root():
     return {"message": "Hello from FastAPI on Vercel"}
+
+
+@app.get("/generate/{count}", tags=["Admin"])
+def generate_users_route(count: int):
+    generate_users(count=count)
+    return {"message": "Generate Users Successfully"}
 
 
 @app.get("/validate/{study_id}", tags=["General"])
