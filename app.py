@@ -6,6 +6,7 @@ from src.utils import (
     get_user_state,
     advance_user_state,
     save_pre_survey,
+    save_post_survey,
 )
 from src.schema import UserState, SurveyResponses
 
@@ -57,7 +58,13 @@ def advance_user_state_route(study_id: str, next_state: UserState):
     return {"message": "Advance User State Successfully"}
 
 
-@app.post("/survey/pre/{study_id}", tags=["Pre-Survey"])
+@app.post("/survey/pre/{study_id}", tags=["Survey"])
 def save_pre_survey_route(study_id: str, survey_responses: SurveyResponses):
     save_pre_survey(study_id=study_id, survey_responses=survey_responses)
     return {"message": "Save Pre-Survey Responses Successfully"}
+
+
+@app.post("/survey/post/{study_id}", tags=["Survey"])
+def save_post_survey_route(study_id: str, survey_responses: SurveyResponses):
+    save_post_survey(study_id=study_id, survey_responses=survey_responses)
+    return {"message": "Save Post-Survey Responses Successfully"}
