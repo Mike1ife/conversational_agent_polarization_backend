@@ -19,7 +19,7 @@ def generate_users(count: int):
     user_docs.insert_many(
         {
             "study_id": "".join(
-                random.choices(string.ascii_uppercase + string.digits, k=6)
+                random.choices(string.ascii_letters + string.digits, k=6)
             ),
             "state": "not_started",
             "created_at": datetime.now(timezone.utc),
