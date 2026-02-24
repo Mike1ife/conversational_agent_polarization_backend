@@ -4,7 +4,7 @@ import string
 from datetime import datetime, timezone
 from pymongo.mongo_client import MongoClient
 
-from src.schema import UserState, SurveyResponses
+from app.schema import UserState, SurveyResponses
 
 # Connection
 uri = os.getenv("MONGODB_URI")
