@@ -22,6 +22,7 @@ def generate_users(count: int):
                 random.choices(string.ascii_letters + string.digits, k=6)
             ),
             "state": "not_started",
+            "party": random.choice(["Republican", "Demoncrat"]),
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),
         }
