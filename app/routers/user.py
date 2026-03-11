@@ -3,6 +3,7 @@ from app.utils import (
     study_id_is_valid,
     get_user_state,
     advance_user_state,
+    get_user_party,
 )
 from app.schema import UserState
 
@@ -22,6 +23,15 @@ def get_user_state_route(study_id: str):
     if study_id_is_valid(study_id=study_id):
         curr_state = get_user_state(study_id=study_id)
         return curr_state.model_dump(by_alias=True)
+    else:
+        raise HTTPException(status_code=404, detail="Study ID Not Found")
+
+
+@router.get("/party/{study_id}")
+def get_user_party_route(study_id: str):
+    if study_id_is_valid(study_id=study_id):
+        party = get_user_party(study_id=study_id)
+        return party.model_dump(by_alias=True)
     else:
         raise HTTPException(status_code=404, detail="Study ID Not Found")
 

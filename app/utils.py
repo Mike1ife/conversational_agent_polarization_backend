@@ -4,7 +4,7 @@ import string
 from datetime import datetime, timezone
 from pymongo.mongo_client import MongoClient
 
-from app.schema import UserState, SurveyResponses
+from app.schema import UserState, SurveyResponses, UserParty
 
 # Connection
 uri = os.getenv("MONGODB_URI")
@@ -41,6 +41,15 @@ def get_user_state(study_id: str) -> UserState:
     )
 
     return UserState(state=user_doc.get("state", "not_started"))
+
+
+def get_user_party(study_id: str) -> UserParty:
+    user_doc = user_docs.find_one(
+        {"study_id": study_id},
+        {"_id": 0, "party": 1},
+    )
+
+    return UserParty(party=user_doc.get("party"))
 
 
 def advance_user_state(study_id: str, next_state: UserState):

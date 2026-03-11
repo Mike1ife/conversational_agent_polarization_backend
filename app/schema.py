@@ -21,3 +21,7 @@ class UserState(CaseModel):
 
 class SurveyResponses(CaseModel):
     responses: Dict[str, str]
+
+
+class UserParty(CaseModel):
+    party: Literal["Republican", "Demoncrat"]
