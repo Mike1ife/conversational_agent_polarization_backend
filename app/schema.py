@@ -24,4 +24,4 @@ class SurveyResponses(CaseModel):
 
 
 class UserParty(CaseModel):
-    party: Literal["Republican", "Demoncrat"]
+    party: Literal["Republican", "Democrat"]
