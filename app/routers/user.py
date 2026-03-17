@@ -4,8 +4,9 @@ from app.utils import (
     get_user_state,
     advance_user_state,
     get_user_party,
+    save_user_party,
 )
-from app.schema import UserState
+from app.schema import UserState, UserParty
 
 router = APIRouter(prefix="/user", tags=["User"])
 
@@ -41,5 +42,14 @@ def advance_user_state_route(study_id: str, next_state: UserState):
     if study_id_is_valid(study_id=study_id):
         advance_user_state(study_id=study_id, next_state=next_state)
         return {"message": "Advance User State Successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Study ID Not Found")
+
+
+@router.post("/party/{study_id}")
+def save_user_party_route(study_id: str, user_party: UserParty):
+    if study_id_is_valid(study_id=study_id):
+        save_user_party(study_id=study_id, user_party=user_party)
+        return {"message": "Save User Party Successfully"}
     else:
         raise HTTPException(status_code=404, detail="Study ID Not Found")

@@ -22,7 +22,6 @@ def generate_users(count: int):
                 random.choices(string.ascii_letters + string.digits, k=6)
             ),
             "state": "not_started",
-            "party": random.choice(["Republican", "Demoncrat"]),
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),
         }
@@ -76,4 +75,11 @@ def save_post_survey(study_id: str, survey_responses: SurveyResponses):
             "$set": {"post_survey": survey_responses.responses},
             "$currentDate": {"updated_at": True},
         },
+    )
+
+
+def save_user_party(study_id: str, user_party: UserParty):
+    user_docs.update_one(
+        {"study_id": study_id},
+        {"$set": {"party": user_party.party}, "$currentDate": {"updated_at": True}},
     )
