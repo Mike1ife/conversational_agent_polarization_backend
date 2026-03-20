@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from app.utils import (
+from app.utils.user import (
     study_id_is_valid,
     get_user_state,
     advance_user_state,

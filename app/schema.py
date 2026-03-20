@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
-from typing import Dict, Literal
+from typing import Dict, Literal, Optional
 
 
 class CaseModel(BaseModel):
@@ -25,3 +25,12 @@ class SurveyResponses(CaseModel):
 
 class UserParty(CaseModel):
     party: Literal["Republican", "Democrat"]
+
+
+class ChatRequest(CaseModel):
+    message: str
+
+
+class ChatResponse(CaseModel):
+    type: Literal["token", "done"]
+    content: Optional[str]

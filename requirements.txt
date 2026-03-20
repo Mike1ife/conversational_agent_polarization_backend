@@ -1,3 +1,5 @@
 fastapi
 uvicorn
 pymongo
+langchain
+langchain-openai
