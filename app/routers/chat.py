@@ -7,7 +7,7 @@ from app.schema import ChatRequest
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
 
-@router.post("/history/{study_id}")
+@router.get("/history/{study_id}")
 def get_conversation_history_route(study_id: str):
     if not study_id_is_valid(study_id=study_id):
         raise HTTPException(status_code=404, detail="Study ID Not Found")
