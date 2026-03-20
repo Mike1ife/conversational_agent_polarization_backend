@@ -7,7 +7,7 @@ from app.schema import ChatRequest
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
 
-@router.post("/chat/{study_id}/complete")
+@router.post("/complete/{study_id}")
 def llm_inference_route(study_id: str, chat_request: ChatRequest):
     if study_id_is_valid(study_id=study_id):
         return StreamingResponse(
