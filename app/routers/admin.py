@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.utils import generate_users
+from app.utils.user import generate_users
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 

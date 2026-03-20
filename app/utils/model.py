@@ -1,8 +1,10 @@
+import os
 from langchain_openai import ChatOpenAI
 
+api_key = os.getenv("API_KEY")
 llm = ChatOpenAI(
     model="longcat-flash-chat",
-    openai_api_key="ak_1i10Gb61767d9lt7k13YA2Hg0nM5f",
+    openai_api_key=api_key,
     openai_api_base="https://api.longcat.chat/openai",
-    max_completion_tokens=512,
+    max_completion_tokens=1024,
 )
