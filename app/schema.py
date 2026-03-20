@@ -34,3 +34,8 @@ class ChatRequest(CaseModel):
 class ChatResponse(CaseModel):
     type: Literal["token", "done"]
     content: Optional[str]
+
+
+class Message(CaseModel):
+    role: Literal["user", "assistant"]
+    content: str

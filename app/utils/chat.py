@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from langchain_core.messages import HumanMessage, AIMessage
 
-from app.schema import ChatResponse, ChatRequest
+from app.schema import ChatResponse, ChatRequest, Message
 from app.utils.db import chat_docs, message_docs
 from app.utils.model import llm
 
@@ -18,6 +18,13 @@ def initialize_conversation(study_id: str):
 
 def get_conversation(study_id: str) -> dict:
     return chat_docs.find_one({"study_id": study_id})
+
+
+def get_conversation_id(study_id: str) -> str | None:
+    conversation = chat_docs.find_one({"study_id": study_id})
+    if not conversation:
+        return None
+    return str(conversation["_id"])
 
 
 def create_message(conversation_id: str, role: str, content: str) -> dict:
@@ -37,7 +44,20 @@ def save_ai_message(conversation_id: str, content: str):
     message_docs.insert_one(create_message(conversation_id, "assistant", content))
 
 
-def get_chat_history(conversation_id: str):
+def get_chat_history(conversation_id: str) -> list:
+    messages = message_docs.find({"conversation_id": conversation_id}).sort(
+        "created_at", 1
+    )
+
+    history = []
+
+    for msg in messages:
+        history.append(Message(role=msg["role"], content=msg["content"]))
+
+    return history
+
+
+def get_chat_history_langchain(conversation_id: str) -> list:
     messages = message_docs.find({"conversation_id": conversation_id}).sort(
         "created_at", 1
     )
@@ -64,7 +84,7 @@ def llm_inference(study_id: str, chat_request: ChatRequest):
 
     save_user_message(conversation_id, chat_request.message)
 
-    history = get_chat_history(conversation_id)
+    history = get_chat_history_langchain(conversation_id)
 
     full_response = ""
 
