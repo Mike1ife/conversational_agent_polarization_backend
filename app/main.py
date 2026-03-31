@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import admin, user, survey, chat, models
@@ -40,3 +40,8 @@ app.include_router(models.router)
 @app.get("/")
 def read_root():
     return {"message": "Hello from FastAPI on Heroku/Vercel"}
+
+
+@app.get("/health", status_code=status.HTTP_204_NO_CONTENT)
+def server_status() -> Response:
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
