@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from app.agent.state import SessionState
+from app.db.conversation import save_turn_log
 from app.llm.base import Message
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,8 @@ def log_turn(
 
         entry = {
             "session_id": state.session_id,
+            "study_id": state.metadata.get("study_id"),
+            "conversation_id": state.metadata.get("conversation_id"),
             "turn": state.turn_count,
             "stage": state.stage.value,
             "strategy": state.strategy,
@@ -34,6 +37,15 @@ def log_turn(
             "messages": [{"role": m.role, "content": m.content} for m in messages],
             "response": response,
         }
+
+        conversation_id = state.metadata.get("conversation_id")
+        study_id = state.metadata.get("study_id")
+        if conversation_id and study_id:
+            save_turn_log(
+                conversation_id=conversation_id,
+                study_id=study_id,
+                entry=entry,
+            )
 
         log_file = path / f"{state.session_id}.jsonl"
         with log_file.open("a", encoding="utf-8") as f:

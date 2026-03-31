@@ -107,6 +107,8 @@ class AgentPipeline:
         messages: list[dict],
         strategy_name: str,
         session_id: str | None = None,
+        study_id: str | None = None,
+        conversation_id: str | None = None,
     ) -> AsyncIterator[str | object]:
         """Process a single conversation turn through the pipeline.
 
@@ -120,6 +122,11 @@ class AgentPipeline:
             strategy=strategy_name,
             session_id=session_id,
         )
+
+        if study_id:
+            state.metadata["study_id"] = study_id
+        if conversation_id:
+            state.metadata["conversation_id"] = conversation_id
 
         # Increment stage turn count
         state.stage_turn_count += 1

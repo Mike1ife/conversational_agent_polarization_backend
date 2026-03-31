@@ -13,3 +13,5 @@ message_docs = db["messages"]
 
 chat_docs.create_index("study_id", unique=True)
 message_docs.create_index([("conversation_id", 1), ("created_at", 1)])
+message_docs.create_index([("study_id", 1), ("created_at", 1)])
+message_docs.create_index([("conversation_id", 1), ("doc_type", 1), ("created_at", 1)])

@@ -4,7 +4,7 @@ import json
 import time
 import uuid
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
 from app.schema import ChatCompletionRequest
@@ -12,7 +12,13 @@ from app.agent.pipeline import AgentPipeline
 from app.config import settings
 from app.llm.registry import get_provider
 from app.db.user import study_id_is_valid
-from app.db.conversation import get_chat_history, get_conversation_id
+from app.db.conversation import (
+    get_chat_history,
+    get_conversation_id,
+    get_or_create_conversation_id,
+    save_user_message,
+    save_ai_message,
+)
 
 
 router = APIRouter(tags=["Chat"])
@@ -71,13 +77,30 @@ def _is_utility_request(messages: list[dict]) -> bool:
 async def chat_completions(request: ChatCompletionRequest):
     """OpenAI-compatible chat completions endpoint."""
 
+    if not study_id_is_valid(study_id=request.study_id):
+        raise HTTPException(status_code=404, detail="Study ID Not Found")
+
     pipeline = _get_pipeline()
+    conversation_id = get_or_create_conversation_id(study_id=request.study_id)
 
     # Derive condition from model ID, fall back to config default
     strategy_name = _MODEL_TO_CONDITION.get(request.model, settings.default_strategy)
 
-    messages = [{"role": m.role, "content": m.text_content()} for m in request.messages]
+    incoming_messages = [
+        {"role": m.role, "content": m.text_content()} for m in request.messages
+    ]
     completion_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
+
+    last_user_message = next(
+        (m["content"] for m in reversed(incoming_messages) if m["role"] == "user"),
+        "",
+    )
+    if not last_user_message:
+        raise HTTPException(status_code=400, detail="No user message found in request")
+
+    history = get_chat_history(conversation_id=conversation_id)
+    messages = [{"role": m.role, "content": m.content} for m in history]
+    messages.append({"role": "user", "content": last_user_message})
 
     # Bypass the agent pipeline for frontend utility requests (title gen, etc.)
     if _is_utility_request(messages):
@@ -85,8 +108,11 @@ async def chat_completions(request: ChatCompletionRequest):
             pipeline, messages, completion_id, request.model, request.stream
         )
 
-    session_id = pipeline.resolve_session_id(
-        messages, strategy_name, request.session_id
+    session_id = request.study_id
+    save_user_message(
+        conversation_id=conversation_id,
+        study_id=request.study_id,
+        content=last_user_message,
     )
 
     if request.stream:
@@ -98,6 +124,8 @@ async def chat_completions(request: ChatCompletionRequest):
                 completion_id,
                 request.model,
                 session_id,
+                request.study_id,
+                conversation_id,
             ),
             media_type="text/event-stream",
             headers={
@@ -113,10 +141,19 @@ async def chat_completions(request: ChatCompletionRequest):
             messages=messages,
             strategy_name=strategy_name,
             session_id=session_id,
+            study_id=request.study_id,
+            conversation_id=conversation_id,
         ):
             if token is AgentPipeline.KEEP_ALIVE:
                 continue
             full_response.append(token)
+
+        assistant_text = "".join(full_response)
+        save_ai_message(
+            conversation_id=conversation_id,
+            study_id=request.study_id,
+            content=assistant_text,
+        )
 
         return {
             "id": completion_id,
@@ -124,12 +161,13 @@ async def chat_completions(request: ChatCompletionRequest):
             "created": int(time.time()),
             "model": request.model,
             "session_id": session_id,
+            "study_id": request.study_id,
             "choices": [
                 {
                     "index": 0,
                     "message": {
                         "role": "assistant",
-                        "content": "".join(full_response),
+                        "content": assistant_text,
                     },
                     "finish_reason": "stop",
                 }
@@ -149,6 +187,8 @@ async def _stream_response(
     completion_id: str,
     model_id: str = "common-identity",
     session_id: str | None = None,
+    study_id: str | None = None,
+    conversation_id: str | None = None,
 ):
     """Generate SSE stream in OpenAI chunk format."""
     created = int(time.time())
@@ -170,16 +210,22 @@ async def _stream_response(
     }
     yield f"data: {json.dumps(initial_chunk)}\n\n"
 
+    full_response = []
+
     # Stream content tokens (pipeline may yield KEEP_ALIVE during blocking work)
     async for token in pipeline.process_turn(
         messages=messages,
         strategy_name=strategy_name,
         session_id=session_id,
+        study_id=study_id,
+        conversation_id=conversation_id,
     ):
         # Keep-alive: send SSE comment to prevent proxy/client timeout
         if token is AgentPipeline.KEEP_ALIVE:
             yield ": keep-alive\n\n"
             continue
+
+        full_response.append(token)
 
         chunk = {
             "id": completion_id,
@@ -212,6 +258,13 @@ async def _stream_response(
     }
     yield f"data: {json.dumps(final_chunk)}\n\n"
     yield "data: [DONE]\n\n"
+
+    if conversation_id and study_id:
+        save_ai_message(
+            conversation_id=conversation_id,
+            study_id=study_id,
+            content="".join(full_response),
+        )
 
 
 async def _utility_response(

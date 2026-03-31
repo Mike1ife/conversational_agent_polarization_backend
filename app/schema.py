@@ -60,6 +60,7 @@ class ChatMessage(CaseModel):
 
 
 class ChatCompletionRequest(CaseModel):
+    study_id: str
     model: str = "common-identity"
     messages: list[ChatMessage]
     stream: bool = False
