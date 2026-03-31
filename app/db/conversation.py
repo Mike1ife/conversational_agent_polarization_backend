@@ -72,14 +72,23 @@ def save_ai_message(conversation_id: str, study_id: str, content: str):
 
 
 def save_turn_log(conversation_id: str, study_id: str, entry: dict):
-    message_docs.insert_one(
+    now = datetime.now(timezone.utc)
+    message_docs.update_one(
         {
             "doc_type": "turn_log",
             "conversation_id": conversation_id,
             "study_id": study_id,
-            "payload": entry,
-            "created_at": datetime.now(timezone.utc),
-        }
+        },
+        {
+            "$set": {
+                "payload": entry,
+                "updated_at": now,
+            },
+            "$setOnInsert": {
+                "created_at": now,
+            },
+        },
+        upsert=True,
     )
 
     chat_docs.update_one(
