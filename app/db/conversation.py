@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
-from langchain_core.messages import HumanMessage, AIMessage
 
-from app.schema import ChatResponse, ChatRequest, Message
+from app.schema import Message
 from app.db.db import chat_docs, message_docs
 
 
