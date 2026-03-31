@@ -2,7 +2,7 @@ import time
 
 from fastapi import APIRouter
 
-router = APIRouter(prefix="/model", tags=["Model"])
+router = APIRouter(tags=["Model"])
 
 _MODELS = [
     {
@@ -35,7 +35,7 @@ _MODELS = [
 ]
 
 
-@router.get("/list")
+@router.get("/v1/models")
 async def list_models():
     """List available models (OpenAI-compatible format)."""
     return {"object": "list", "data": _MODELS}

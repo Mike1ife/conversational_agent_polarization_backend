@@ -15,10 +15,10 @@ from app.db.user import study_id_is_valid
 from app.db.conversation import get_chat_history, get_conversation_id
 
 
-router = APIRouter(prefix="/chat", tags=["Chat"])
+router = APIRouter(tags=["Chat"])
 
 
-@router.get("/history/{study_id}")
+@router.get("/chat/history/{study_id}")
 def get_conversation_history_route(study_id: str):
     if not study_id_is_valid(study_id=study_id):
         raise HTTPException(status_code=404, detail="Study ID Not Found")
@@ -67,32 +67,37 @@ def _is_utility_request(messages: list[dict]) -> bool:
     return any(phrase in low for phrase in _UTILITY_PHRASES)
 
 
-@router.post("/completions")
-async def chat_completions(request: Request):
+@router.post("/v1/chat/completions")
+async def chat_completions(request: ChatCompletionRequest):
     """OpenAI-compatible chat completions endpoint."""
-    body = await request.json()
-    req = ChatCompletionRequest(**body)
 
     pipeline = _get_pipeline()
 
     # Derive condition from model ID, fall back to config default
-    strategy_name = _MODEL_TO_CONDITION.get(req.model, settings.default_strategy)
+    strategy_name = _MODEL_TO_CONDITION.get(request.model, settings.default_strategy)
 
-    messages = [{"role": m.role, "content": m.text_content()} for m in req.messages]
+    messages = [{"role": m.role, "content": m.text_content()} for m in request.messages]
     completion_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
 
     # Bypass the agent pipeline for frontend utility requests (title gen, etc.)
     if _is_utility_request(messages):
         return await _utility_response(
-            pipeline, messages, completion_id, req.model, req.stream
+            pipeline, messages, completion_id, request.model, request.stream
         )
 
-    session_id = pipeline.resolve_session_id(messages, strategy_name, req.session_id)
+    session_id = pipeline.resolve_session_id(
+        messages, strategy_name, request.session_id
+    )
 
-    if req.stream:
+    if request.stream:
         return StreamingResponse(
             _stream_response(
-                pipeline, messages, strategy_name, completion_id, req.model, session_id
+                pipeline,
+                messages,
+                strategy_name,
+                completion_id,
+                request.model,
+                session_id,
             ),
             media_type="text/event-stream",
             headers={
@@ -117,7 +122,7 @@ async def chat_completions(request: Request):
             "id": completion_id,
             "object": "chat.completion",
             "created": int(time.time()),
-            "model": req.model,
+            "model": request.model,
             "session_id": session_id,
             "choices": [
                 {
