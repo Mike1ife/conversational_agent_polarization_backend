@@ -39,3 +39,32 @@ class ChatResponse(CaseModel):
 class Message(CaseModel):
     role: Literal["user", "assistant"]
     content: str
+
+
+class ChatMessage(CaseModel):
+    role: str
+    content: str | list
+
+    def text_content(self) -> str:
+        """Extract plain text from content, whether string or list format."""
+        if isinstance(self.content, str):
+            return self.content
+        # Handle OpenAI multi-modal format: [{"type": "text", "text": "..."}]
+        parts = []
+        for item in self.content:
+            if isinstance(item, dict) and item.get("type") == "text":
+                parts.append(item.get("text", ""))
+            elif isinstance(item, str):
+                parts.append(item)
+        return " ".join(parts)
+
+
+class ChatCompletionRequest(CaseModel):
+    model: str = "common-identity"
+    messages: list[ChatMessage]
+    stream: bool = False
+    temperature: float | None = None
+    max_tokens: int | None = None
+    session_id: str | None = (
+        None  # pass back on subsequent turns for session continuity
+    )

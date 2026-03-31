@@ -1,4 +1,4 @@
-from app.utils.db import user_docs
+from app.db.db import user_docs
 from app.schema import SurveyResponses
 
 

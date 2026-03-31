@@ -2,7 +2,7 @@ import random
 import string
 from datetime import datetime, timezone
 
-from app.utils.db import user_docs
+from app.db.db import user_docs
 from app.schema import UserState, UserParty
 
 

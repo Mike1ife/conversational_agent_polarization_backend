@@ -2,8 +2,7 @@ from datetime import datetime, timezone
 from langchain_core.messages import HumanMessage, AIMessage
 
 from app.schema import ChatResponse, ChatRequest, Message
-from app.utils.db import chat_docs, message_docs
-from app.utils.model import llm
+from app.db.db import chat_docs, message_docs
 
 
 def initialize_conversation(study_id: str):
@@ -55,53 +54,3 @@ def get_chat_history(conversation_id: str) -> list:
         history.append(Message(role=msg["role"], content=msg["content"]))
 
     return history
-
-
-def get_chat_history_langchain(conversation_id: str) -> list:
-    messages = message_docs.find({"conversation_id": conversation_id}).sort(
-        "created_at", 1
-    )
-
-    history = []
-
-    for msg in messages:
-        if msg["role"] == "user":
-            history.append(HumanMessage(content=msg["content"]))
-        else:
-            history.append(AIMessage(content=msg["content"]))
-
-    return history
-
-
-def llm_inference(study_id: str, chat_request: ChatRequest):
-    conversation = get_conversation(study_id)
-
-    if not conversation:
-        initialize_conversation(study_id)
-        conversation = get_conversation(study_id)
-
-    conversation_id = str(conversation["_id"])
-
-    save_user_message(conversation_id, chat_request.message)
-
-    history = get_chat_history_langchain(conversation_id)
-
-    full_response = ""
-
-    for chunk in llm.stream(history):
-        if not chunk.content:
-            continue
-        token = chunk.content
-        full_response += token
-
-        yield f"data: {ChatResponse(type='token', content=token).model_dump_json()}\n\n"
-
-    # send done signal
-    yield f"data: {ChatResponse(type='done', content=None).model_dump_json()}\n\n"
-
-    save_ai_message(conversation_id, full_response)
-
-    chat_docs.update_one(
-        {"_id": conversation["_id"]},
-        {"$currentDate": {"updated_at": True}},
-    )

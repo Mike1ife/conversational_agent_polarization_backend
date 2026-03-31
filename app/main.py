@@ -1,9 +1,21 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import admin, user, survey, chat
+from app.api import admin, user, survey, chat, models
+from app.config import settings
 
-app = FastAPI()
+logging.basicConfig(
+    level=getattr(logging, settings.log_level.upper(), logging.INFO),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
+app = FastAPI(
+    title="Partisan Animosity Study API",
+    description="Research study agents: Common Identity and Personal Narrative conditions.",
+    version="0.1.0",
+)
 
 origins = [
     "http://localhost:3000",
@@ -22,6 +34,7 @@ app.include_router(admin.router)
 app.include_router(user.router)
 app.include_router(survey.router)
 app.include_router(chat.router)
+app.include_router(models.router)
 
 
 @app.get("/")

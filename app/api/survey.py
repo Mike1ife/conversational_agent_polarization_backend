@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.utils.survey import save_pre_survey, save_post_survey
+from app.db.survey import save_pre_survey, save_post_survey
 from app.schema import SurveyResponses
 
 router = APIRouter(prefix="/survey", tags=["Survey"])

@@ -1,0 +1,27 @@
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    # LLM configuration
+    llm_provider: str = "openai"  # "openai", "anthropic", or "azure"
+    llm_model: str = "gpt-4o"
+    llm_api_key: str = ""
+    llm_base_url: str | None = None  # optional override for OpenAI-compatible endpoints
+    llm_api_version: str = "2024-12-01-preview"  # Azure OpenAI API version
+
+    # Server configuration
+    api_host: str = "0.0.0.0"
+    api_port: int = 8080
+
+    # Agent configuration
+    default_strategy: str = "common_identity"  # "common_identity" or "personal_narrative"
+    enable_think: bool = False  # enable internal reasoning step before each response
+
+    # Logging
+    log_level: str = "info"
+    conversations_dir: str = "conversations"  # folder where per-session JSONL logs are saved
+
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+
+
+settings = Settings()
