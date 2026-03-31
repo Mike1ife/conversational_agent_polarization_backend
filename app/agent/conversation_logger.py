@@ -25,9 +25,6 @@ def log_turn(
         path.mkdir(parents=True, exist_ok=True)
 
         entry = {
-            "session_id": state.session_id,
-            "study_id": state.metadata.get("study_id"),
-            "conversation_id": state.metadata.get("conversation_id"),
             "turn": state.turn_count,
             "stage": state.stage.value,
             "strategy": state.strategy,

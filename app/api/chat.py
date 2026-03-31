@@ -73,6 +73,21 @@ def _is_utility_request(messages: list[dict]) -> bool:
     return any(phrase in low for phrase in _UTILITY_PHRASES)
 
 
+def _get_stage_info(
+    pipeline: AgentPipeline,
+    session_id: str | None,
+) -> tuple[str | None, bool]:
+    if not session_id:
+        return None, False
+
+    state = pipeline.state_manager.get(session_id)
+    if state is None:
+        return None, False
+
+    stage = state.stage.value
+    return stage, stage == "complete"
+
+
 @router.post("/v1/chat/completions")
 async def chat_completions(request: ChatCompletionRequest):
     """OpenAI-compatible chat completions endpoint."""
@@ -154,6 +169,7 @@ async def chat_completions(request: ChatCompletionRequest):
             study_id=request.study_id,
             content=assistant_text,
         )
+        stage, conversation_complete = _get_stage_info(pipeline, session_id)
 
         return {
             "id": completion_id,
@@ -162,6 +178,8 @@ async def chat_completions(request: ChatCompletionRequest):
             "model": request.model,
             "session_id": session_id,
             "study_id": request.study_id,
+            "stage": stage,
+            "conversation_complete": conversation_complete,
             "choices": [
                 {
                     "index": 0,
@@ -243,11 +261,14 @@ async def _stream_response(
         yield f"data: {json.dumps(chunk)}\n\n"
 
     # Final chunk
+    stage, conversation_complete = _get_stage_info(pipeline, session_id)
     final_chunk = {
         "id": completion_id,
         "object": "chat.completion.chunk",
         "created": created,
         "model": model_id,
+        "stage": stage,
+        "conversation_complete": conversation_complete,
         "choices": [
             {
                 "index": 0,
@@ -286,7 +307,7 @@ async def _utility_response(
             created = int(time.time())
             for chunk_text in [response]:
                 yield f"data: {json.dumps({'id': completion_id, 'object': 'chat.completion.chunk', 'created': created, 'model': model_id, 'choices': [{'index': 0, 'delta': {'content': chunk_text}, 'finish_reason': None}]})}\n\n"
-            yield f"data: {json.dumps({'id': completion_id, 'object': 'chat.completion.chunk', 'created': created, 'model': model_id, 'choices': [{'index': 0, 'delta': {}, 'finish_reason': 'stop'}]})}\n\n"
+            yield f"data: {json.dumps({'id': completion_id, 'object': 'chat.completion.chunk', 'created': created, 'model': model_id, 'stage': None, 'conversation_complete': False, 'choices': [{'index': 0, 'delta': {}, 'finish_reason': 'stop'}]})}\n\n"
             yield "data: [DONE]\n\n"
 
         return StreamingResponse(
@@ -300,6 +321,8 @@ async def _utility_response(
         "object": "chat.completion",
         "created": int(time.time()),
         "model": model_id,
+        "stage": None,
+        "conversation_complete": False,
         "choices": [
             {
                 "index": 0,
