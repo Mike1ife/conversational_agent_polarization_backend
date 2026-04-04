@@ -3,20 +3,42 @@ import string
 from datetime import datetime, timezone
 
 from app.db.db import user_docs
-from app.schema import UserState, UserParty
+from app.schema import UserState, UserParty, AgentCode
+
+from app.agent.strategies import Strategy
 
 
 def generate_users(count: int):
     user_docs.insert_many(
-        {
-            "study_id": "".join(
-                random.choices(string.ascii_letters + string.digits, k=6)
-            ),
-            "state": "not_started",
-            "created_at": datetime.now(timezone.utc),
-            "updated_at": datetime.now(timezone.utc),
-        }
-        for _ in range(count)
+        [
+            {
+                "study_id": "".join(
+                    random.choices(string.ascii_letters + string.digits, k=6)
+                ),
+                "agent_code": random.choice(list(Strategy)).value,
+                "state": "not_started",
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
+            }
+            for _ in range(count)
+        ]
+    )
+
+
+def generate_users_by_agent_code(agent_code: AgentCode, count: int):
+    user_docs.insert_many(
+        [
+            {
+                "study_id": "".join(
+                    random.choices(string.ascii_letters + string.digits, k=6)
+                ),
+                "agent_code": agent_code.strategy,
+                "state": "not_started",
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
+            }
+            for _ in range(count)
+        ]
     )
 
 

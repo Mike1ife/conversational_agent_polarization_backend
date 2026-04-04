@@ -19,6 +19,12 @@ class UserState(CaseModel):
     ]
 
 
+class AgentCode(CaseModel):
+    strategy: Literal[
+        "common_identity", "personal_narrative", "misperception_correction"
+    ]
+
+
 class SurveyResponses(CaseModel):
     responses: Dict[str, str]
 
