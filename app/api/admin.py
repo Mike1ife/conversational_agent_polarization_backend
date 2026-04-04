@@ -27,6 +27,6 @@ def get_availble_users_by_agent_strategy_route(agent_strategy: AgentStrategy):
     return get_availble_users_by_agent_strategy(agent_strategy=agent_strategy)
 
 
-@router.post("/agent_strategy/list/users/available")
+@router.post("/agent_strategy/list/users/complete")
 def get_complete_users_by_agent_strategy_route(agent_strategy: AgentStrategy):
     return get_complete_users_by_agent_strategy(agent_strategy=agent_strategy)
