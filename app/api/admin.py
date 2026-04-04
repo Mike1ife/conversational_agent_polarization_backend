@@ -21,6 +21,6 @@ def generate_users_by_agent_strategy_route(agent_strategy: AgentStrategy, count:
     return {"message": f"Generate Users for {agent_strategy} Successfully"}
 
 
-@router.post("/list/users/agent_strategy")
+@router.post("/list/agent_strategy/users")
 def get_users_by_agent_strategy_route(agent_strategy: AgentStrategy):
     return get_users_by_agent_strategy(agent_strategy=agent_strategy)
