@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from app.db.user import (
     study_id_is_valid,
     get_user_state,
+    get_user_agent_strategy,
     advance_user_state,
     get_user_party,
     save_user_party,
@@ -24,6 +25,15 @@ def get_user_state_route(study_id: str):
     if study_id_is_valid(study_id=study_id):
         curr_state = get_user_state(study_id=study_id)
         return curr_state.model_dump(by_alias=True)
+    else:
+        raise HTTPException(status_code=404, detail="Study ID Not Found")
+
+
+@router.get("/get/agent_strategy/{study_id}")
+def get_user_agent_strategy_route(study_id: str):
+    if study_id_is_valid(study_id=study_id):
+        agent_strategy = get_user_agent_strategy(study_id=study_id)
+        return agent_strategy.model_dump(by_alias=True)
     else:
         raise HTTPException(status_code=404, detail="Study ID Not Found")
 
