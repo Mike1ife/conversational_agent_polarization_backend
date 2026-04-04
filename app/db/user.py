@@ -1,47 +1,9 @@
-import random
-import string
-from datetime import datetime, timezone
-
 from app.db.db import user_docs
 from app.schema import UserState, UserParty, AgentStrategy
 
-from app.agent.strategies import Strategy
 
-
-def generate_users(count: int):
-    """Generate user randomly"""
-    user_docs.insert_many(
-        [
-            {
-                "study_id": "".join(
-                    random.choices(string.ascii_letters + string.digits, k=6)
-                ),
-                "agent_strategy": random.choice(list(Strategy)).value,
-                "state": "not_started",
-                "created_at": datetime.now(timezone.utc),
-                "updated_at": datetime.now(timezone.utc),
-            }
-            for _ in range(count)
-        ]
-    )
-
-
-def generate_users_by_agent_strategy(agent_strategy: AgentStrategy, count: int):
-    """Pre-experiment where start with intervention"""
-    user_docs.insert_many(
-        [
-            {
-                "study_id": "".join(
-                    random.choices(string.ascii_letters + string.digits, k=6)
-                ),
-                "agent_strategy": agent_strategy.strategy,
-                "state": "intervention",
-                "created_at": datetime.now(timezone.utc),
-                "updated_at": datetime.now(timezone.utc),
-            }
-            for _ in range(count)
-        ]
-    )
+def study_id_is_valid(study_id: str) -> bool:
+    return user_docs.count_documents({"study_id": study_id}, limit=1) > 0
 
 
 def get_user_agent_strategy(study_id: str) -> AgentStrategy:
@@ -52,20 +14,6 @@ def get_user_agent_strategy(study_id: str) -> AgentStrategy:
     )
 
     return AgentStrategy(strategy=user_doc.get("agent_strategy", "common_identity"))
-
-
-def get_users_by_agent_strategy(agent_strategy: AgentStrategy) -> list:
-    """Get user list by agent strategy"""
-    cursor = user_docs.find(
-        {"agent_strategy": agent_strategy.strategy},
-        {"_id": 0, "study_id": 1},
-    )
-
-    return [user_doc["study_id"] for user_doc in cursor]
-
-
-def study_id_is_valid(study_id: str) -> bool:
-    return user_docs.count_documents({"study_id": study_id}, limit=1) > 0
 
 
 def get_user_state(study_id: str) -> UserState:
