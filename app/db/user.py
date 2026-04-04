@@ -26,6 +26,7 @@ def generate_users(count: int):
 
 
 def generate_users_by_agent_code(agent_code: AgentCode, count: int):
+    """Pre-experiment where start with intervention"""
     user_docs.insert_many(
         [
             {
@@ -33,7 +34,7 @@ def generate_users_by_agent_code(agent_code: AgentCode, count: int):
                     random.choices(string.ascii_letters + string.digits, k=6)
                 ),
                 "agent_code": agent_code.strategy,
-                "state": "not_started",
+                "state": "intervention",
                 "created_at": datetime.now(timezone.utc),
                 "updated_at": datetime.now(timezone.utc),
             }
