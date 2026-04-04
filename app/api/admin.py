@@ -32,6 +32,6 @@ def get_user_agent_strategy_route(study_id: str):
         raise HTTPException(status_code=404, detail="Study ID Not Found")
 
 
-@router.get("/list/users/agent_strategy")
+@router.post("/list/users/agent_strategy")
 def get_users_by_agent_strategy_route(agent_strategy: AgentStrategy):
     return get_users_by_agent_strategy(agent_strategy=agent_strategy)
