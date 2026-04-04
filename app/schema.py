@@ -19,7 +19,7 @@ class UserState(CaseModel):
     ]
 
 
-class AgentCode(CaseModel):
+class AgentStrategy(CaseModel):
     strategy: Literal[
         "common_identity", "personal_narrative", "misperception_correction"
     ]
