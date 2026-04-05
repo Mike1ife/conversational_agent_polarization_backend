@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 from app.db.admin import (
     generate_users,
     generate_users_by_agent_strategy,
-    get_state_users_by_agent_strategy,
+    get_users_by_state_and_strategy,
     delete_all_users,
     delete_user_by_id,
 )
@@ -36,10 +36,10 @@ def generate_users_by_agent_strategy_route(request: GenerateUserByStrategyReques
 
 
 @router.post("/agent_strategy/list/users")
-def get_state_users_by_agent_strategy_route(request: GetUserByStrategyRequest):
+def get_users_by_state_and_strategy_route(request: GetUserByStrategyRequest):
     if request.password != admin_password:
         raise HTTPException(status_code=403, detail="Invalid admin password")
-    return get_state_users_by_agent_strategy(
+    return get_users_by_state_and_strategy(
         state=request.state, strategy=request.strategy
     )
 
