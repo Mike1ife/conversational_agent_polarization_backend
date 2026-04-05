@@ -31,9 +31,7 @@ def generate_users_route(request: GenerateUserRequest):
 def generate_users_by_agent_strategy_route(request: GenerateUserByStrategyRequest):
     if request.password != admin_password:
         raise HTTPException(status_code=403, detail="Invalid admin password")
-    generate_users_by_agent_strategy(
-        agent_strategy=request.strategy, count=request.count
-    )
+    generate_users_by_agent_strategy(strategy=request.strategy, count=request.count)
     return {"message": f"Generate Users for {request.strategy} Successfully"}
 
 
@@ -42,7 +40,7 @@ def get_state_users_by_agent_strategy_route(request: GetUserByStrategyRequest):
     if request.password != admin_password:
         raise HTTPException(status_code=403, detail="Invalid admin password")
     return get_state_users_by_agent_strategy(
-        state=request.state, agent_strategy=request.strategy
+        state=request.state, strategy=request.strategy
     )
 
 
