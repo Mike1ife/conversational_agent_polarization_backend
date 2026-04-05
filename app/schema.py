@@ -7,6 +7,48 @@ class CaseModel(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
 
+class AdminRequest(CaseModel):
+    password: str
+
+
+class GenerateUserRequest(AdminRequest):
+    count: int
+
+
+class GenerateUserByStrategyRequest(GenerateUserRequest):
+    strategy: Literal[
+        "common_identity",
+        "personal_narrative",
+        "misperception_correction",
+        "control",
+        "control_politics",
+    ]
+
+
+class GetUserByStrategyRequest(AdminRequest):
+    state: Literal[
+        "not_started",
+        "pre_survey",
+        "to_intervention",
+        "intervention",
+        "to_post_survey",
+        "post_survey",
+        "complete",
+    ]
+    strategy: Literal[
+        "common_identity",
+        "personal_narrative",
+        "misperception_correction",
+        "control",
+        "control_politics",
+    ]
+
+
+class GetUserResponse(CaseModel):
+    study_id: str
+    url: str
+
+
 class UserState(CaseModel):
     state: Literal[
         "not_started",

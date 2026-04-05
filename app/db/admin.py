@@ -4,7 +4,7 @@ import string
 from datetime import datetime, timezone
 
 from app.db.db import user_docs
-from app.schema import AgentStrategy
+from app.schema import GetUserResponse
 
 from app.agent.strategies import Strategy
 
@@ -29,7 +29,7 @@ def generate_users(count: int):
     )
 
 
-def generate_users_by_agent_strategy(agent_strategy: AgentStrategy, count: int):
+def generate_users_by_agent_strategy(strategy: str, count: int):
     """Pre-experiment where start with intervention"""
     user_docs.insert_many(
         [
@@ -37,7 +37,7 @@ def generate_users_by_agent_strategy(agent_strategy: AgentStrategy, count: int):
                 "study_id": "".join(
                     random.choices(string.ascii_letters + string.digits, k=6)
                 ),
-                "agent_strategy": agent_strategy.strategy,
+                "strategy": strategy,
                 "state": "intervention",
                 "created_at": datetime.now(timezone.utc),
                 "updated_at": datetime.now(timezone.utc),
@@ -47,21 +47,17 @@ def generate_users_by_agent_strategy(agent_strategy: AgentStrategy, count: int):
     )
 
 
-def get_availble_users_by_agent_strategy(agent_strategy: AgentStrategy) -> list:
+def get_state_users_by_agent_strategy(state: str, strategy: str) -> list:
     """Get available user list by agent strategy (Pre-experiment Setting)"""
     cursor = user_docs.find(
-        {"agent_strategy": agent_strategy.strategy},
+        {"state": state},
+        {"agent_strategy": strategy},
         {"_id": 0, "study_id": 1, "state": "intervention"},
     )
 
-    return [f"{base_url}/{user_doc["study_id"]}" for user_doc in cursor]
-
-
-def get_complete_users_by_agent_strategy(agent_strategy: AgentStrategy) -> list:
-    """Get complete user list by agent strategy (Pre-experiment Setting)"""
-    cursor = user_docs.find(
-        {"agent_strategy": agent_strategy.strategy},
-        {"_id": 0, "study_id": 1, "state": "complete"},
-    )
-
-    return [user_doc["study_id"] for user_doc in cursor]
+    return [
+        GetUserResponse(
+            study_id=user_doc["study_id"], url=f"{base_url}/{user_doc['study_id']}"
+        )
+        for user_doc in cursor
+    ]
