@@ -10,10 +10,10 @@ def get_user_agent_strategy(study_id: str) -> AgentStrategy:
     """Get user's agent strategy by study_id"""
     user_doc = user_docs.find_one(
         {"study_id": study_id},
-        {"_id": 0, "agent_strategy": 1},
+        {"_id": 0, "strategy": 1},
     )
 
-    return AgentStrategy(strategy=user_doc.get("agent_strategy", "common_identity"))
+    return AgentStrategy(strategy=user_doc.get("strategy", "common_identity"))
 
 
 def get_user_state(study_id: str) -> UserState:

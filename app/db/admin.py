@@ -51,7 +51,7 @@ def get_state_users_by_agent_strategy(state: str, strategy: str) -> list:
     """Get available user list by agent strategy (Pre-experiment Setting)"""
     cursor = user_docs.find(
         {"state": state},
-        {"agent_strategy": strategy},
+        {"strategy": strategy},
         {"_id": 0, "study_id": 1, "state": "intervention"},
     )
 
