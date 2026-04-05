@@ -122,6 +122,6 @@ class ChatCompletionRequest(CaseModel):
     ] = "common-identity"
     messages: list[ChatMessage]
     stream: bool = False
-    temperature: Optional[float]
-    max_tokens: Optional[int]
-    political_party: Optional[Literal["Republican", "Democrat"]]
+    temperature: Optional[float] = None
+    max_tokens: Optional[int] = None
+    political_party: Optional[Literal["Republican", "Democrat"]] = None
