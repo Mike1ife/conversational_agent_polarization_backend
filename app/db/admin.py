@@ -3,7 +3,7 @@ import random
 import string
 from datetime import datetime, timezone
 
-from app.db.db import user_docs
+from app.db.db import chat_docs, message_docs, user_docs
 from app.schema import GetUserResponse
 
 from app.agent.strategies import Strategy
@@ -19,7 +19,7 @@ def generate_users(count: int):
                 "study_id": "".join(
                     random.choices(string.ascii_letters + string.digits, k=6)
                 ),
-                "agent_strategy": random.choice(list(Strategy)).value,
+                "strategy": random.choice(list(Strategy)).value,
                 "state": "not_started",
                 "created_at": datetime.now(timezone.utc),
                 "updated_at": datetime.now(timezone.utc),
@@ -61,3 +61,18 @@ def get_state_users_by_agent_strategy(state: str, strategy: str) -> list:
         )
         for user_doc in cursor
     ]
+
+
+def delete_all_users() -> int:
+    """Delete all users and their associated conversations/messages."""
+    deleted_users = user_docs.delete_many({}).deleted_count
+    chat_docs.delete_many({})
+    message_docs.delete_many({})
+    return deleted_users
+
+
+def delete_user_by_id(study_id: str) -> int:
+    """Delete one user and associated conversations/messages by study_id."""
+    user_docs.delete_one({"study_id": study_id}).deleted_count
+    chat_docs.delete_many({"study_id": study_id})
+    message_docs.delete_many({"study_id": study_id})

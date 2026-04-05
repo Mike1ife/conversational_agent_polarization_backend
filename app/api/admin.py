@@ -4,8 +4,12 @@ from app.db.admin import (
     generate_users,
     generate_users_by_agent_strategy,
     get_state_users_by_agent_strategy,
+    delete_all_users,
+    delete_user_by_id,
 )
+from app.db.user import study_id_is_valid
 from app.schema import (
+    AdminRequest,
     GenerateUserRequest,
     GenerateUserByStrategyRequest,
     GetUserByStrategyRequest,
@@ -40,3 +44,21 @@ def get_state_users_by_agent_strategy_route(request: GetUserByStrategyRequest):
     return get_state_users_by_agent_strategy(
         state=request.state, agent_strategy=request.strategy
     )
+
+
+@router.delete("/delete/all")
+def delete_all_users_route(request: AdminRequest):
+    if request.password != admin_password:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+    delete_count = delete_all_users()
+    return f"Delete {delete_count} Users Successfully"
+
+
+@router.delete("/delete/{study_id}")
+def delete_all_users_route(study_id: str, request: AdminRequest):
+    if request.password != admin_password:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+    if not study_id_is_valid(study_id=study_id):
+        raise HTTPException(status_code=404, detail="Study ID Not Found")
+    delete_user_by_id(study_id=study_id)
+    return f"Delete Users {study_id} Successfully"
