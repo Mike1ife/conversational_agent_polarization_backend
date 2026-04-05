@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 # Stage transition evaluation prompt
 STAGE_EVAL_PROMPT = """You are a stage controller for a partisan animosity research study agent.
-The agent guides users through a structured conversation in one of three conditions.
+The agent guides users through a structured conversation in one of several conditions.
 
 Condition: {condition}
 Current stage: {current_stage}
@@ -18,9 +18,6 @@ Stage turn count (turns within this stage): {stage_turn_count}
 Known signals: {signals}
 
 Transition criteria:
-
-For both conditions:
-- INTAKE → stage_1: political_party in signals is not null (user has stated their party affiliation)
 
 For condition "common_identity":
 - STAGE_1 → STAGE_2: feeling_expressed is true AND stage_turn_count >= 2
@@ -40,6 +37,14 @@ For condition "misperception_correction":
 - STAGE_3 → STAGE_4: reflection_shared is true AND stage_turn_count >= 1
 - STAGE_4 → COMPLETE: stage_turn_count >= 1
 
+For condition "control":
+- STAGE_1 → STAGE_4: stage_turn_count >= 8
+- STAGE_4 → COMPLETE: stage_turn_count >= 1
+
+For condition "control_politics":
+- STAGE_1 → STAGE_4: stage_turn_count >= 8
+- STAGE_4 → COMPLETE: stage_turn_count >= 1
+
 COMPLETE is terminal — never transition away from it.
 
 Latest user message: "{user_message}"
@@ -50,7 +55,7 @@ When in doubt, stay in the current stage.
 Respond with a JSON object:
 {{"next_stage": "<stage_name>", "reasoning": "<brief explanation>"}}
 
-Valid stage names: intake, stage_1, stage_2, stage_3, stage_4, complete"""
+Valid stage names: stage_1, stage_2, stage_3, stage_4, complete"""
 
 
 class StageController:
@@ -73,7 +78,9 @@ class StageController:
                 return Stage.INTAKE
             state.stage = Stage.STAGE_1
             state.stage_turn_count = 0
-            logger.info("Stage transition: intake -> stage_1 (political_party confirmed)")
+            logger.info(
+                "Stage transition: intake -> stage_1 (political_party confirmed)"
+            )
             return Stage.STAGE_1
 
         prompt = STAGE_EVAL_PROMPT.format(
@@ -104,5 +111,7 @@ class StageController:
             state.stage = next_stage
             return next_stage
         except (json.JSONDecodeError, ValueError, KeyError) as e:
-            logger.warning("Stage evaluation failed, staying in %s: %s", state.stage.value, e)
+            logger.warning(
+                "Stage evaluation failed, staying in %s: %s", state.stage.value, e
+            )
             return state.stage

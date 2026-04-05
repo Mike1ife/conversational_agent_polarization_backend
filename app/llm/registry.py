@@ -25,7 +25,9 @@ def get_provider() -> LLMProvider:
         )
     elif settings.llm_provider == "azure":
         if not settings.llm_base_url:
-            raise ValueError("Azure provider requires LLM_BASE_URL (your Azure endpoint)")
+            raise ValueError(
+                "Azure provider requires LLM_BASE_URL (your Azure endpoint)"
+            )
         _provider_instance = AzureOpenAIProvider(
             api_key=settings.llm_api_key,
             model=settings.llm_model,

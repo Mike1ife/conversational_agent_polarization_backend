@@ -21,7 +21,11 @@ class UserState(CaseModel):
 
 class AgentStrategy(CaseModel):
     strategy: Literal[
-        "common_identity", "personal_narrative", "misperception_correction"
+        "common_identity",
+        "personal_narrative",
+        "misperception_correction",
+        "control",
+        "control_politics",
     ]
 
 
@@ -67,11 +71,15 @@ class ChatMessage(CaseModel):
 
 class ChatCompletionRequest(CaseModel):
     study_id: str
-    model: str = "common-identity"
+    model: Literal[
+        "common-identity",
+        "personal-narrative",
+        "misperception-correction",
+        "control",
+        "control-politics",
+    ] = "common-identity"
     messages: list[ChatMessage]
     stream: bool = False
-    temperature: float | None = None
-    max_tokens: int | None = None
-    session_id: str | None = (
-        None  # pass back on subsequent turns for session continuity
-    )
+    temperature: Optional[float]
+    max_tokens: Optional[int]
+    political_party: Optional[Literal["Republican", "Democrat"]]

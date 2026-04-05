@@ -52,6 +52,8 @@ _MODEL_TO_CONDITION = {
     "common-identity": "common_identity",
     "personal-narrative": "personal_narrative",
     "misperception-correction": "misperception_correction",
+    "control": "control",
+    "control-politics": "control_politics",
 }
 
 

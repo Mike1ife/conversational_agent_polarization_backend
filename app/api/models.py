@@ -2,7 +2,7 @@ import time
 
 from fastapi import APIRouter
 
-router = APIRouter(tags=["Model"])
+router = APIRouter()
 
 _MODELS = [
     {
@@ -30,6 +30,24 @@ _MODELS = [
         "owned_by": "partisan-animosity-study",
         "permission": [],
         "root": "misperception-correction",
+        "parent": None,
+    },
+    {
+        "id": "control",
+        "object": "model",
+        "created": int(time.time()),
+        "owned_by": "partisan-animosity-study",
+        "permission": [],
+        "root": "control",
+        "parent": None,
+    },
+    {
+        "id": "control-politics",
+        "object": "model",
+        "created": int(time.time()),
+        "owned_by": "partisan-animosity-study",
+        "permission": [],
+        "root": "control-politics",
         "parent": None,
     },
 ]

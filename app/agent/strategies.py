@@ -8,6 +8,8 @@ class Strategy(str, Enum):
     COMMON_IDENTITY = "common_identity"
     PERSONAL_NARRATIVE = "personal_narrative"
     MISPERCEPTION_CORRECTION = "misperception_correction"
+    CONTROL = "control"
+    CONTROL_POLITICS = "control_politics"
 
 
 @dataclass
@@ -43,6 +45,20 @@ STRATEGY_CONFIGS: dict[Strategy, StrategyConfig] = {
             "democracy by asking them to estimate what the other party believes about "
             "anti-democratic actions, then revealing accurate survey data showing that the "
             "other party overwhelmingly rejects those actions."
+        ),
+    ),
+    Strategy.CONTROL: StrategyConfig(
+        name=Strategy.CONTROL,
+        description=(
+            "Wellbeing control condition: mental health check-in conversation with no "
+            "political content. Controls for the general effect of interacting with a conversational AI."
+        ),
+    ),
+    Strategy.CONTROL_POLITICS: StrategyConfig(
+        name=Strategy.CONTROL_POLITICS,
+        description=(
+            "Politics control condition: open-ended political conversation with no guided "
+            "intervention. Controls for the effect of discussing politics with an AI."
         ),
     ),
 }
