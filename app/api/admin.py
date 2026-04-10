@@ -21,6 +21,7 @@ admin_password = os.getenv("ADMIN_PASSWORD")
 
 @router.post("/generate")
 def generate_users_route(request: GenerateUserRequest):
+    """Generate User for each Strategy"""
     if request.password != admin_password:
         raise HTTPException(status_code=403, detail="Invalid admin password")
     generate_users(count=request.count)
@@ -29,6 +30,7 @@ def generate_users_route(request: GenerateUserRequest):
 
 @router.post("/agent_strategy/generate")
 def generate_users_by_agent_strategy_route(request: GenerateUserByStrategyRequest):
+    """Generate User for Specified Strategy"""
     if request.password != admin_password:
         raise HTTPException(status_code=403, detail="Invalid admin password")
     generate_users_by_agent_strategy(strategy=request.strategy, count=request.count)
@@ -37,6 +39,7 @@ def generate_users_by_agent_strategy_route(request: GenerateUserByStrategyReques
 
 @router.post("/agent_strategy/list/users")
 def get_users_by_state_and_strategy_route(request: GetUserByStrategyRequest):
+    """Get user list by state and strategy"""
     if request.password != admin_password:
         raise HTTPException(status_code=403, detail="Invalid admin password")
     return get_users_by_state_and_strategy(
@@ -46,6 +49,7 @@ def get_users_by_state_and_strategy_route(request: GetUserByStrategyRequest):
 
 @router.delete("/delete/all")
 def delete_all_users_route(request: AdminRequest):
+    """Delete all users and their associated conversations/messages."""
     if request.password != admin_password:
         raise HTTPException(status_code=403, detail="Invalid admin password")
     delete_count = delete_all_users()
@@ -54,6 +58,7 @@ def delete_all_users_route(request: AdminRequest):
 
 @router.delete("/delete/{study_id}")
 def delete_all_users_route(study_id: str, request: AdminRequest):
+    """Delete one user and associated conversations/messages by study_id."""
     if request.password != admin_password:
         raise HTTPException(status_code=403, detail="Invalid admin password")
     if not study_id_is_valid(study_id=study_id):

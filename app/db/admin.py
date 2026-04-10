@@ -3,7 +3,7 @@ import random
 import string
 from datetime import datetime, timezone
 
-from app.db.db import chat_docs, message_docs, user_docs
+from app.db.documents import conversation_docs, user_docs
 from app.schema import GetUserResponse
 
 from app.agent.strategies import Strategy
@@ -12,14 +12,31 @@ base_url = os.getenv("PLATFORM_URL")
 
 
 def generate_users(count: int):
-    """Generate user randomly"""
+    for stragegy in list(Strategy):
+        user_docs.insert_many(
+            [
+                {
+                    "study_id": "".join(
+                        random.choices(string.ascii_letters + string.digits, k=6)
+                    ),
+                    "strategy": stragegy.value,
+                    "state": "not_started",
+                    "created_at": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(timezone.utc),
+                }
+                for _ in range(count)
+            ]
+        )
+
+
+def generate_users_by_agent_strategy(strategy: str, count: int):
     user_docs.insert_many(
         [
             {
                 "study_id": "".join(
                     random.choices(string.ascii_letters + string.digits, k=6)
                 ),
-                "strategy": random.choice(list(Strategy)).value,
+                "strategy": strategy,
                 "state": "not_started",
                 "created_at": datetime.now(timezone.utc),
                 "updated_at": datetime.now(timezone.utc),
@@ -29,26 +46,7 @@ def generate_users(count: int):
     )
 
 
-def generate_users_by_agent_strategy(strategy: str, count: int):
-    """Pre-experiment where start with intervention"""
-    user_docs.insert_many(
-        [
-            {
-                "study_id": "".join(
-                    random.choices(string.ascii_letters + string.digits, k=6)
-                ),
-                "strategy": strategy,
-                "state": "intervention",
-                "created_at": datetime.now(timezone.utc),
-                "updated_at": datetime.now(timezone.utc),
-            }
-            for _ in range(count)
-        ]
-    )
-
-
 def get_users_by_state_and_strategy(state: str, strategy: str) -> list:
-    """Get user list by state and strategy (Pre-experiment Setting)"""
     cursor = user_docs.find(
         {"state": state, "strategy": strategy},
         {
@@ -66,15 +64,11 @@ def get_users_by_state_and_strategy(state: str, strategy: str) -> list:
 
 
 def delete_all_users() -> int:
-    """Delete all users and their associated conversations/messages."""
     deleted_users = user_docs.delete_many({}).deleted_count
-    chat_docs.delete_many({})
-    message_docs.delete_many({})
+    conversation_docs.delete_many({})
     return deleted_users
 
 
 def delete_user_by_id(study_id: str) -> int:
-    """Delete one user and associated conversations/messages by study_id."""
     user_docs.delete_one({"study_id": study_id}).deleted_count
-    chat_docs.delete_many({"study_id": study_id})
-    message_docs.delete_many({"study_id": study_id})
+    conversation_docs.delete_many({"study_id": study_id})

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass, field
 from enum import Enum
+
+from app.db.user import get_user_party
+from app.db.conversation import get_conversation
 
 
 class Stage(str, Enum):
@@ -16,7 +18,7 @@ class Stage(str, Enum):
 
 @dataclass
 class SessionState:
-    session_id: str
+    study_id: str
     stage: Stage = Stage.INTAKE
     strategy: str = "common_identity"  # fixed for the session
     political_party: str | None = None  # "republican" or "democrat", set during intake
@@ -28,43 +30,29 @@ class SessionState:
     metadata: dict = field(default_factory=dict)
 
 
-class StateManager:
-    """In-memory session state store."""
+def build_session_state(
+    study_id: str, strategy: str, messages: list[dict]
+) -> SessionState:
+    """Reconstruct SessionState from DB payload and current messages."""
+    conversation = get_conversation(study_id)
+    user_party = get_user_party(study_id)
+    political_party = user_party.party if user_party is not None else None
 
-    def __init__(self):
-        self._sessions: dict[str, SessionState] = {}
+    state = SessionState(
+        study_id=study_id, strategy=strategy, political_party=political_party
+    )
 
-    def _compute_session_id(self, messages: list[dict], strategy: str = "") -> str:
-        """Derive a stable session ID from the first user message + strategy.
+    # Populate from latest DB entry
+    if conversation and conversation.get("payload"):
+        payload = conversation["payload"]
+        state.stage = Stage(payload.get("stage", "intake"))
+        state.political_party = political_party
+        if political_party:
+            state.signals["political_party"] = political_party
+        # system_prompt is also in payload if needed
+        state.metadata["last_observation"] = payload.get("last_observation", {})
 
-        Consistent across all turns since the first user message never changes.
-        """
-        for msg in messages:
-            if msg.get("role") == "user":
-                raw = f"{strategy}:{msg['content'][:200]}"
-                return hashlib.sha256(raw.encode()).hexdigest()[:16]
-        return hashlib.sha256(strategy.encode()).hexdigest()[:16]
+    # Count turns from messages
+    state.turn_count = sum(1 for m in messages if m.get("role") == "user")
 
-    def get_or_create(
-        self,
-        messages: list[dict],
-        strategy: str,
-        session_id: str | None = None,
-    ) -> SessionState:
-        if session_id is None:
-            session_id = self._compute_session_id(messages, strategy)
-
-        if session_id not in self._sessions:
-            self._sessions[session_id] = SessionState(
-                session_id=session_id,
-                strategy=strategy,
-            )
-        state = self._sessions[session_id]
-        state.turn_count = sum(1 for m in messages if m.get("role") == "user")
-        return state
-
-    def get(self, session_id: str) -> SessionState | None:
-        return self._sessions.get(session_id)
-
-    def delete(self, session_id: str) -> None:
-        self._sessions.pop(session_id, None)
+    return state

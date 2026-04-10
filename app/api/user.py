@@ -42,6 +42,8 @@ def get_user_agent_strategy_route(study_id: str):
 def get_user_party_route(study_id: str):
     if study_id_is_valid(study_id=study_id):
         party = get_user_party(study_id=study_id)
+        if party is None:
+            raise HTTPException(status_code=404, detail="Party Not Found")
         return party.model_dump(by_alias=True)
     else:
         raise HTTPException(status_code=404, detail="Study ID Not Found")

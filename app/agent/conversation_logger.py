@@ -21,8 +21,8 @@ def log_turn(
 ) -> None:
     """Append a single conversation turn to the session's JSONL log file."""
     try:
-        path = Path(conversations_dir)
-        path.mkdir(parents=True, exist_ok=True)
+        # path = Path(conversations_dir)
+        # path.mkdir(parents=True, exist_ok=True)
 
         entry = {
             "turn": state.turn_count,
@@ -35,18 +35,16 @@ def log_turn(
             "response": response,
         }
 
-        conversation_id = state.metadata.get("conversation_id")
         study_id = state.metadata.get("study_id")
-        if conversation_id and study_id:
+        if study_id:
             save_turn_log(
-                conversation_id=conversation_id,
                 study_id=study_id,
                 entry=entry,
             )
 
-        log_file = path / f"{state.session_id}.jsonl"
-        with log_file.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
+        # log_file = path / f"{state.session_id}.jsonl"
+        # with log_file.open("a", encoding="utf-8") as f:
+        #     f.write(json.dumps(entry) + "\n")
 
     except Exception as e:
         logger.warning("Failed to log conversation turn: %s", e)

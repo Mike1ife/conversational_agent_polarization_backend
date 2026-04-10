@@ -72,17 +72,6 @@ class StageController:
         if state.stage == Stage.COMPLETE:
             return Stage.COMPLETE
 
-        # INTAKE can only advance once political_party is confirmed — enforce in code, not LLM
-        if state.stage == Stage.INTAKE:
-            if not state.signals.get("political_party"):
-                return Stage.INTAKE
-            state.stage = Stage.STAGE_1
-            state.stage_turn_count = 0
-            logger.info(
-                "Stage transition: intake -> stage_1 (political_party confirmed)"
-            )
-            return Stage.STAGE_1
-
         prompt = STAGE_EVAL_PROMPT.format(
             condition=state.strategy,
             current_stage=state.stage.value,
@@ -106,7 +95,6 @@ class StageController:
                     next_stage.value,
                     result.get("reasoning", ""),
                 )
-                # Reset stage turn count on transition
                 state.stage_turn_count = 0
             state.stage = next_stage
             return next_stage

@@ -429,16 +429,16 @@ If stage is "intake", extract:
 
 If condition is "common_identity", extract:
 {{
-    "feeling_expressed": <true if user has expressed a genuine emotional feeling about politics, else false>,
+    "feeling_expressed": <true if user has expressed a genuine emotional feeling about [opposing party] supporters, else false>,
     "media_mentioned": <true if user mentioned news or social media as source of info about opposing party, else false>,
     "media_distortion_acknowledged": <true if user gestured toward the idea that media may not be representative, else false>,
-    "data_point_shared": <true if a concrete survey finding has been shared with the user in this conversation, else false>,
+    "exhausted_majority_introduced": <true if the exhausted majority data point has been delivered — either the agent shared the survey finding OR the user independently described most ordinary Americans as exhausted with division, else false>,
     "common_identity_described": <true if user has described a group of reasonable/exhausted people that crosses party lines, else false>
 }}
 
 If condition is "personal_narrative", extract:
 {{
-    "person_name": "<name or relationship label if mentioned, else null>",
+    "person_label": "<the label the user chose for this person — a relationship/role label ('my uncle', 'a coworker') or a first name if the user volunteered one; null if not yet identified>",
     "person_is_real": <true if user identified a real person they know, false if imagined/hypothetical, null if unknown>,
     "person_details_count": <integer count of distinct personal details shared about the person (personality traits, things they care about, memories, daily life)>,
     "origins_explored": <true if user has discussed or speculated about why this person holds their political views, else false>
@@ -447,7 +447,8 @@ If condition is "personal_narrative", extract:
 If condition is "misperception_correction", extract:
 {{
     "intro_completed": <true if the agent has delivered the introduction framing and the user has agreed to proceed, else false>,
-    "questions_answered": <integer count of quiz questions for which the user has provided a guess AND the agent has revealed the actual survey finding — increment only after both halves of the exchange are complete>,
+    "questions_answered": <integer count of quiz questions for which the user has provided a Likert response AND the agent has revealed the survey finding — increment only after both halves are complete>,
+    "question_answers": <dict mapping question ID to the user's numeric choice — e.g. {{"q3": 2}} if the user just answered question 3 with option 2 (probably not). Infer the current question ID as "q{{questions_answered + 1}}". Map text answers: never→1, probably not→2, probably→3, definitely→4. Only include the key for the question just answered; omit keys for unanswered questions. Return {{}} if no new answer was given this turn.>,
     "reflection_shared": <true if the user has shared their overall reaction after all 8 questions, else false>
 }}
 
@@ -491,6 +492,15 @@ def _get_opposing_party(political_party: str | None) -> str:
     return "[opposing party]"  # safe fallback before intake completes
 
 
+def _get_user_party(political_party: str | None) -> str:
+    """Return the user's own party adjective."""
+    if political_party == "republican":
+        return "Republican"
+    elif political_party == "democrat":
+        return "Democratic"
+    return "[user party]"  # safe fallback before intake completes
+
+
 def build_system_prompt(
     stage: Stage,
     strategy: StrategyConfig,
@@ -526,6 +536,10 @@ def build_system_prompt(
     parts.append("\n".join(context_lines))
 
     full_prompt = "\n".join(parts)
-    return full_prompt.replace(
+    full_prompt = full_prompt.replace(
         "[opposing party]", _get_opposing_party(state.political_party)
     )
+    full_prompt = full_prompt.replace(
+        "[user party]", _get_user_party(state.political_party)
+    )
+    return full_prompt

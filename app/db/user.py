@@ -1,4 +1,4 @@
-from app.db.db import user_docs
+from app.db.documents import user_docs
 from app.schema import UserState, UserParty, AgentStrategy
 
 
@@ -25,11 +25,14 @@ def get_user_state(study_id: str) -> UserState:
     return UserState(state=user_doc.get("state", "not_started"))
 
 
-def get_user_party(study_id: str) -> UserParty:
+def get_user_party(study_id: str) -> UserParty | None:
     user_doc = user_docs.find_one(
         {"study_id": study_id},
         {"_id": 0, "party": 1},
     )
+
+    if not user_doc or user_doc.get("party") is None:
+        return None
 
     return UserParty(party=user_doc.get("party"))
 

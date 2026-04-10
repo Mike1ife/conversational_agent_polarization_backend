@@ -76,7 +76,7 @@ class SurveyResponses(CaseModel):
 
 
 class UserParty(CaseModel):
-    party: Literal["Republican", "Democrat"]
+    party: Literal["republican", "democrat"]
 
 
 class ChatRequest(CaseModel):
@@ -124,4 +124,3 @@ class ChatCompletionRequest(CaseModel):
     stream: bool = False
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
-    political_party: Optional[Literal["Republican", "Democrat"]] = None
