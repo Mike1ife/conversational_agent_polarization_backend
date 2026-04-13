@@ -1,5 +1,5 @@
 from app.db.documents import user_docs
-from app.schema import UserState, UserParty, AgentStrategy
+from app.schema import UserState, UserParty, AgentStrategy, StudyType
 
 
 def study_id_is_valid(study_id: str) -> bool:
@@ -49,3 +49,11 @@ def save_user_party(study_id: str, user_party: UserParty):
         {"study_id": study_id},
         {"$set": {"party": user_party.party}, "$currentDate": {"updated_at": True}},
     )
+
+
+def get_user_study_type(study_id: str) -> StudyType:
+    user_doc = user_docs.find_one(
+        {"study_id": study_id},
+        {"_id": 0, "type": 1},
+    )
+    return StudyType(type=user_doc.get("type"))

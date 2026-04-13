@@ -15,7 +15,7 @@ def generate_experiment_user() -> str:
             "study_id": study_id,
             "type": "experiment",
             "strategy": random.choice(list(Strategy)).value,
-            "state": "not_started",
+            "state": "intervention",
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),
         }

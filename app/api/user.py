@@ -6,6 +6,7 @@ from app.db.user import (
     advance_user_state,
     get_user_party,
     save_user_party,
+    get_user_study_type,
 )
 from app.schema import UserState, UserParty
 
@@ -63,5 +64,14 @@ def save_user_party_route(study_id: str, user_party: UserParty):
     if study_id_is_valid(study_id=study_id):
         save_user_party(study_id=study_id, user_party=user_party)
         return {"message": "Save User Party Successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Study ID Not Found")
+
+
+@router.get("/type/{study_id}")
+def get_user_study_type_router(study_id: str):
+    if study_id_is_valid(study_id=study_id):
+        study_type = get_user_study_type(study_id=study_id)
+        return study_type.model_dump(by_alias=True)
     else:
         raise HTTPException(status_code=404, detail="Study ID Not Found")

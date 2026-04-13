@@ -49,6 +49,10 @@ class GetUserResponse(CaseModel):
     url: str
 
 
+class StudyType(CaseModel):
+    type: Literal["study", "experiment"]
+
+
 class UserState(CaseModel):
     state: Literal[
         "not_started",
