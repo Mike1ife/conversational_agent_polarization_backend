@@ -124,7 +124,7 @@ class ChatCompletionRequest(CaseModel):
         "control",
         "control-politics",
     ] = "common-identity"
-    messages: list[ChatMessage]
+    message: ChatMessage
     stream: bool = False
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
