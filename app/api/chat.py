@@ -58,29 +58,13 @@ _UTILITY_PHRASES = (
 )
 
 
-def _merge_history_with_request_messages(
-    study_id: str, request_messages: list[dict]
-) -> list[dict]:
-    """Build effective chat context: persisted history + current request messages."""
+def _get_hisotry(study_id: str) -> list[dict]:
+    """Build effective chat context: persisted history + current request message."""
     history = [
         {"role": m.role, "content": m.content}
         for m in get_chat_history(study_id=study_id)
     ]
-
-    if not history:
-        return request_messages
-    if not request_messages:
-        return history
-
-    # Deduplicate when request already includes part of persisted history.
-    max_overlap = min(len(history), len(request_messages))
-    overlap = 0
-    for size in range(max_overlap, 0, -1):
-        if history[-size:] == request_messages[:size]:
-            overlap = size
-            break
-
-    return history + request_messages[overlap:]
+    return history
 
 
 def _is_utility_request(messages: list[dict]) -> bool:
@@ -115,10 +99,10 @@ async def chat_completions(request: ChatCompletionRequest):
     # Derive condition from model ID, fall back to config default
     strategy_name = _MODEL_TO_CONDITION.get(request.model, settings.default_strategy)
 
-    request_messages = [
-        {"role": m.role, "content": m.text_content()} for m in request.messages
-    ]
-    messages = _merge_history_with_request_messages(study_id, request_messages)
+    messages = _get_hisotry(study_id)
+    messages.append(
+        {"role": request.message.role, "content": request.message.text_content()}
+    )
     completion_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
 
     if _is_utility_request(messages):
