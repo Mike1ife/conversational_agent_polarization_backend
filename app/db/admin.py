@@ -11,14 +11,17 @@ from app.agent.strategies import Strategy
 base_url = os.getenv("PLATFORM_URL")
 
 
+def generate_study_id():
+    return "".join(random.choices(string.ascii_letters + string.digits, k=6))
+
+
 def generate_users(count: int):
     for stragegy in list(Strategy):
         user_docs.insert_many(
             [
                 {
-                    "study_id": "".join(
-                        random.choices(string.ascii_letters + string.digits, k=6)
-                    ),
+                    "study_id": generate_study_id(),
+                    "type": "study",
                     "strategy": stragegy.value,
                     "state": "not_started",
                     "created_at": datetime.now(timezone.utc),
@@ -33,9 +36,8 @@ def generate_users_by_agent_strategy(strategy: str, count: int):
     user_docs.insert_many(
         [
             {
-                "study_id": "".join(
-                    random.choices(string.ascii_letters + string.digits, k=6)
-                ),
+                "study_id": generate_study_id(),
+                "type": "study",
                 "strategy": strategy,
                 "state": "not_started",
                 "created_at": datetime.now(timezone.utc),
