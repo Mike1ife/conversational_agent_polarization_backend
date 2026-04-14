@@ -35,7 +35,6 @@ def log_turn(
                 {"role": m.role, "content": m.content} for m in messages
             ]
             + [{"role": "assistant", "content": response}],
-            "response": response,
         }
 
         study_id = state.metadata.get("study_id")

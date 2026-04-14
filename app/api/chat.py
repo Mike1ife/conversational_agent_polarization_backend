@@ -100,9 +100,10 @@ async def chat_completions(request: ChatCompletionRequest):
     strategy_name = _MODEL_TO_CONDITION.get(request.model, settings.default_strategy)
 
     messages = _get_history(study_id)
-    messages.append(
-        {"role": request.message.role, "content": request.message.text_content()}
-    )
+    incoming_text = request.message.text_content()
+    # Frontend may send an empty user message to trigger greeting; do not persist it.
+    if incoming_text.strip():
+        messages.append({"role": request.message.role, "content": incoming_text})
     completion_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
 
     if _is_utility_request(messages):

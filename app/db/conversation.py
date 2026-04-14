@@ -45,16 +45,6 @@ def get_chat_history(study_id: str) -> list:
         return []
 
     payload = conversation_doc.get("payload") or {}
-    response = conversation_doc.get("response")
 
     messages = payload.get("messages") or payload.get("message") or []
-    history = _coerce_messages(messages)
-
-    if response and (
-        not history
-        or history[-1].role != "assistant"
-        or history[-1].content != response
-    ):
-        history.append(Message(role="assistant", content=response))
-
-    return history
+    return _coerce_messages(messages)
