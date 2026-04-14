@@ -15,7 +15,6 @@ def save_turn_log(study_id: str, entry: dict):
         {
             "$set": {
                 "payload": entry,
-                "response": entry.get("response"),
                 "updated_at": now,
             },
             "$setOnInsert": {"created_at": now},
