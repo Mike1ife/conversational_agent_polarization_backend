@@ -8,7 +8,6 @@ from app.db.conversation import get_conversation
 
 
 class Stage(str, Enum):
-    INTAKE = "intake"
     STAGE_1 = "stage_1"
     STAGE_2 = "stage_2"
     STAGE_3 = "stage_3"
@@ -19,7 +18,7 @@ class Stage(str, Enum):
 @dataclass
 class SessionState:
     study_id: str
-    stage: Stage = Stage.INTAKE
+    stage: Stage = Stage.STAGE_1
     strategy: str = "common_identity"  # fixed for the session
     political_party: str | None = None  # "republican" or "democrat", set during intake
     stage_turn_count: int = 0  # turns within the current stage (resets on transition)
@@ -45,7 +44,8 @@ def build_session_state(
     # Populate from latest DB entry
     if conversation and conversation.get("payload"):
         payload = conversation["payload"]
-        state.stage = Stage(payload.get("stage", "intake"))
+        raw_stage = payload.get("stage", "stage_1")
+        state.stage = Stage(raw_stage)
         state.political_party = political_party
         if political_party:
             state.signals["political_party"] = political_party

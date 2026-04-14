@@ -118,7 +118,6 @@ Ask this question word for word:
 
 STAGE_PROMPTS: dict[Strategy, dict[Stage, str]] = {
     Strategy.COMMON_IDENTITY: {
-        Stage.INTAKE: _INTAKE_PROMPT,
         Stage.STAGE_1: """You are in Stage 1: Establish rapport and surface feelings about politics (2–3 turns).
 
 If this is the first turn in Stage 1 (the Session Context shows stage turn count is 1), open with this question word for word:
@@ -167,7 +166,6 @@ Then:
         Stage.COMPLETE: """The conversation is complete. The user has finished the study. Thank them warmly and let them know they can close the chat.""",
     },
     Strategy.PERSONAL_NARRATIVE: {
-        Stage.INTAKE: _INTAKE_PROMPT,
         Stage.STAGE_1: """You are in Stage 1: Find the person (2–3 turns).
 
 If this is the first turn in Stage 1 (the Session Context shows stage turn count is 1), open with this question word for word:
@@ -222,7 +220,6 @@ Then:
         Stage.COMPLETE: """The conversation is complete. The user has finished the study. Thank them warmly and let them know they can close the chat.""",
     },
     Strategy.MISPERCEPTION_CORRECTION: {
-        Stage.INTAKE: _INTAKE_PROMPT,
         Stage.STAGE_1: """You are in Stage 1: Introduction (1–2 turns).
 
 If this is the first turn in Stage 1 (the Session Context shows stage turn count is 1), deliver this framing word for word:
@@ -364,7 +361,6 @@ Then:
         Stage.COMPLETE: """The conversation is complete. The user has finished the study. Thank them warmly and let them know they can close the chat.""",
     },
     Strategy.CONTROL: {
-        Stage.INTAKE: _INTAKE_PROMPT,
         Stage.STAGE_1: """You are in the main conversation stage of the control condition.
 
 If this is the first turn in Stage 1 (the Session Context shows stage turn count is 1), open with this question word for word:
@@ -385,7 +381,6 @@ Then thank them genuinely and end the conversation.""",
         Stage.COMPLETE: """The conversation is complete. The user has finished the study. Thank them warmly and let them know they can close the chat.""",
     },
     Strategy.CONTROL_POLITICS: {
-        Stage.INTAKE: _INTAKE_PROMPT,
         Stage.STAGE_1: """You are in the main conversation stage of the politics control condition.
 
 If this is the first turn in Stage 1 (the Session Context shows stage turn count is 1), open with this question word for word:
@@ -421,11 +416,6 @@ Known signals so far: {signals}
 User message: "{user_message}"
 
 Extract any new information from this message and respond with a JSON object.
-
-If stage is "intake", extract:
-{{
-    "political_party": "<'republican' if user indicated Republican Party or GOP, 'democrat' if user indicated Democratic Party or Democrats, else null>"
-}}
 
 If condition is "common_identity", extract:
 {{
