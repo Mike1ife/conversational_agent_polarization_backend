@@ -31,7 +31,10 @@ def log_turn(
             "political_party": state.political_party,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "system_prompt": system_prompt,
-            "messages": [{"role": m.role, "content": m.content} for m in messages],
+            "messages": [
+                {"role": m.role, "content": m.content} for m in messages
+            ]
+            + [{"role": "assistant", "content": response}],
             "response": response,
         }
 

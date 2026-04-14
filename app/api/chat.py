@@ -58,7 +58,7 @@ _UTILITY_PHRASES = (
 )
 
 
-def _get_hisotry(study_id: str) -> list[dict]:
+def _get_history(study_id: str) -> list[dict]:
     """Build effective chat context: persisted history + current request message."""
     history = [
         {"role": m.role, "content": m.content}
@@ -99,7 +99,7 @@ async def chat_completions(request: ChatCompletionRequest):
     # Derive condition from model ID, fall back to config default
     strategy_name = _MODEL_TO_CONDITION.get(request.model, settings.default_strategy)
 
-    messages = _get_hisotry(study_id)
+    messages = _get_history(study_id)
     messages.append(
         {"role": request.message.role, "content": request.message.text_content()}
     )

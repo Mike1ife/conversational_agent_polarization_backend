@@ -13,11 +13,30 @@ def save_turn_log(study_id: str, entry: dict):
     conversation_docs.update_one(
         {"study_id": study_id},
         {
-            "$set": {"payload": entry, "updated_at": now},
+            "$set": {
+                "payload": entry,
+                "response": entry.get("response"),
+                "updated_at": now,
+            },
             "$setOnInsert": {"created_at": now},
         },
         upsert=True,
     )
+
+
+def _coerce_messages(messages: list | None) -> list[Message]:
+    history: list[Message] = []
+
+    for msg in messages or []:
+        if not isinstance(msg, dict):
+            continue
+
+        role = msg.get("role")
+        content = msg.get("content")
+        if role in {"user", "assistant"} and isinstance(content, str):
+            history.append(Message(role=role, content=content))
+
+    return history
 
 
 def get_chat_history(study_id: str) -> list:
@@ -26,18 +45,17 @@ def get_chat_history(study_id: str) -> list:
     if not conversation_doc:
         return []
 
-    payload = conversation_doc.get("payload", None)
-    response = conversation_doc.get("response", None)
+    payload = conversation_doc.get("payload") or {}
+    response = conversation_doc.get("response")
 
-    if not payload or not response:
-        return []
+    messages = payload.get("messages") or payload.get("message") or []
+    history = _coerce_messages(messages)
 
-    messages = payload.get("messages", [])
-
-    history = []
-
-    for msg in messages:
-        history.append(Message(role=msg["role"], content=msg["content"]))
-    history.append(Message(role="assistant", content=response))
+    if response and (
+        not history
+        or history[-1].role != "assistant"
+        or history[-1].content != response
+    ):
+        history.append(Message(role="assistant", content=response))
 
     return history
