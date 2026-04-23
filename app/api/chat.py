@@ -32,6 +32,8 @@ def get_conversation_history_route(study_id: str):
 def get_conversation_observation_endpoint(study_id: str):
     if study_id_is_valid(study_id=study_id):
         observation = get_conversation_observation(study_id=study_id)
+        if not observation:
+            return None
         return observation.model_dump(by_alias=True)
     else:
         raise HTTPException(status_code=404, detail="Study ID Not Found")
