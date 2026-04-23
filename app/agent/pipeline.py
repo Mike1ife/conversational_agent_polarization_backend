@@ -7,7 +7,8 @@ from collections.abc import AsyncIterator
 
 from app.agent.conversation_logger import log_safety_event, log_turn
 from app.agent.phases import StageController
-from app.agent.prompts import OBSERVE_PROMPT, THINK_PROMPT, build_system_prompt
+from app.agent.strategies import Strategy
+from app.agent.prompts import OBSERVE_PROMPTS, THINK_PROMPT, build_system_prompt
 from app.agent.safety import (
     SafetyVerdict,
     TERMINATION_REENTRY_MESSAGE,
@@ -30,7 +31,8 @@ class AgentPipeline:
 
     async def _observe(self, state: SessionState, user_message: str) -> None:
         """Analyze user message and update condition-specific signals."""
-        prompt = OBSERVE_PROMPT.format(
+        prompt_template = OBSERVE_PROMPTS[Strategy(state.strategy)]
+        prompt = prompt_template.format(
             condition=state.strategy,
             stage=state.stage.value,
             stage_turn_count=state.stage_turn_count,
@@ -46,22 +48,37 @@ class AgentPipeline:
             )
             extracted = json.loads(response.strip().strip("```json").strip("```"))
 
-            # Merge extracted signals into state (only update non-null/non-false values)
+            # Merge extracted signals into state. Never overwrite existing data
+            # with an empty/falsy value — the model occasionally drops a field
+            # it previously populated, and for lists we want to accumulate.
             for key, value in extracted.items():
-                if value not in (None,):
-                    # For booleans: only update if transitioning false→true or setting a value
-                    if isinstance(value, bool):
-                        if value:
-                            state.signals[key] = value
-                    elif isinstance(value, int):
-                        # Take the max for count fields
-                        state.signals[key] = max(state.signals.get(key, 0), value)
+                if value is None:
+                    continue
+                if isinstance(value, bool):
+                    if value:
+                        state.signals[key] = value
+                elif isinstance(value, int):
+                    state.signals[key] = max(state.signals.get(key, 0), value)
+                elif isinstance(value, list):
+                    existing = state.signals.get(key, [])
+                    if isinstance(existing, list):
+                        merged = list(existing)
+                        for item in value:
+                            if item not in merged:
+                                merged.append(item)
+                        state.signals[key] = merged
                     else:
                         state.signals[key] = value
-
-            # Sync political_party from signals to dedicated state field
-            if state.signals.get("political_party") and state.political_party is None:
-                state.political_party = state.signals["political_party"]
+                elif isinstance(value, dict):
+                    existing = state.signals.get(key, {})
+                    state.signals[key] = (
+                        {**existing, **value} if isinstance(existing, dict) else value
+                    )
+                elif isinstance(value, str):
+                    if value:
+                        state.signals[key] = value
+                else:
+                    state.signals[key] = value
 
             state.metadata["last_observation"] = extracted
 
@@ -160,7 +177,7 @@ class AgentPipeline:
                 log_safety_event(settings.conversations_dir, state, verdict)
                 logger.info(
                     "Safety reminder for session %s: %s (consecutive=%d)",
-                    state.session_id,
+                    state.study_id,
                     verdict.reason,
                     state.consecutive_reminders,
                 )
@@ -178,7 +195,7 @@ class AgentPipeline:
                 log_safety_event(settings.conversations_dir, state, verdict)
                 logger.info(
                     "Safety termination for session %s: %s",
-                    state.session_id,
+                    state.study_id,
                     verdict.reason,
                 )
                 yield verdict.termination_text
