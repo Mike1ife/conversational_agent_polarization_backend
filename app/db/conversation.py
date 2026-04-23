@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from app.schema import Message
+from app.schema import Message, MCObservation, ChatObservation
 from app.db.documents import conversation_docs
 
 
@@ -63,3 +63,33 @@ def get_chat_history(study_id: str) -> list:
 
     messages = payload.get("messages") or payload.get("message") or []
     return _coerce_messages(messages)
+
+
+def _get_misperception_correction_observation(signals: dict) -> MCObservation:
+    question_answers = signals.get("question_answers", {})
+    return MCObservation(answers=list(question_answers.values()))
+
+
+strategy_observation = {
+    "misperception_correction": _get_misperception_correction_observation
+}
+
+
+def get_conversation_observation(study_id: str) -> ChatObservation | None:
+    conversation_doc = conversation_docs.find_one({"study_id": study_id})
+
+    if not conversation_doc:
+        return None
+
+    payload = conversation_doc.get("payload")
+
+    if not payload:
+        return None
+
+    strategy = payload.get("strategy")
+    signals = payload.get("signals")
+
+    if not strategy or not signals:
+        return None
+
+    return ChatObservation(observation=strategy_observation[strategy](signals))

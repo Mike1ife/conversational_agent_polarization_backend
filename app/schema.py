@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
-from typing import Dict, Literal, Optional
+from typing import Dict, Literal, Optional, Union
 
 
 class CaseModel(BaseModel):
@@ -128,3 +128,11 @@ class ChatCompletionRequest(CaseModel):
     stream: bool = False
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
+
+
+class MCObservation(CaseModel):
+    answers: list[int]
+
+
+class ChatObservation(CaseModel):
+    observation: Union[MCObservation]

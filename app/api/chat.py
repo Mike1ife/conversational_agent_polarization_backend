@@ -14,7 +14,7 @@ from app.llm.registry import get_provider
 from app.db.user import study_id_is_valid
 from app.db.conversation import (
     get_chat_history,
-    get_conversation,
+    get_conversation_observation,
 )
 
 
@@ -26,6 +26,15 @@ def get_conversation_history_route(study_id: str):
     if not study_id_is_valid(study_id=study_id):
         raise HTTPException(status_code=404, detail="Study ID Not Found")
     return get_chat_history(study_id=study_id)
+
+
+@router.get("/observation/{study__id}")
+def get_conversation_observation_endpoint(study_id: str):
+    if study_id_is_valid(study_id=study_id):
+        observation = get_conversation_observation(study_id=study_id)
+        return observation.model_dump(by_alias=True)
+    else:
+        raise HTTPException(status_code=404, detail="Study ID Not Found")
 
 
 # Lazy-initialized pipeline singleton
