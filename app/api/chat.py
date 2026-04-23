@@ -28,7 +28,7 @@ def get_conversation_history_route(study_id: str):
     return get_chat_history(study_id=study_id)
 
 
-@router.get("/observation/{study__id}")
+@router.get("/observation/{study_id}")
 def get_conversation_observation_endpoint(study_id: str):
     if study_id_is_valid(study_id=study_id):
         observation = get_conversation_observation(study_id=study_id)
