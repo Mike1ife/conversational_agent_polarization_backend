@@ -22,6 +22,46 @@ from app.llm.base import LLMProvider, Message
 logger = logging.getLogger(__name__)
 
 
+def _merge_question_answers(existing: dict, incoming: dict) -> dict:
+    """Merge quiz answers while preserving previously captured question slots."""
+    merged = dict(existing)
+
+    def _question_index(raw_key: str) -> int:
+        if not isinstance(raw_key, str) or not raw_key.startswith("q"):
+            return 10**9
+        try:
+            return int(raw_key[1:])
+        except ValueError:
+            return 10**9
+
+    for raw_key, raw_value in sorted(
+        incoming.items(), key=lambda item: _question_index(item[0])
+    ):
+        if not isinstance(raw_key, str) or not raw_key.startswith("q"):
+            continue
+
+        try:
+            idx = int(raw_key[1:])
+        except ValueError:
+            continue
+
+        if idx < 1:
+            continue
+
+        if not isinstance(raw_value, int) or raw_value < 1 or raw_value > 4:
+            continue
+
+        target_key = f"q{idx}"
+        while target_key in merged and merged[target_key] != raw_value:
+            idx += 1
+            target_key = f"q{idx}"
+
+        if target_key not in merged:
+            merged[target_key] = raw_value
+
+    return merged
+
+
 class AgentPipeline:
     """Core agent pipeline implementing plan-execute-observe loop."""
 
@@ -71,9 +111,18 @@ class AgentPipeline:
                         state.signals[key] = value
                 elif isinstance(value, dict):
                     existing = state.signals.get(key, {})
-                    state.signals[key] = (
-                        {**existing, **value} if isinstance(existing, dict) else value
-                    )
+                    if (
+                        key == "question_answers"
+                        and isinstance(existing, dict)
+                        and isinstance(value, dict)
+                    ):
+                        state.signals[key] = _merge_question_answers(existing, value)
+                    else:
+                        state.signals[key] = (
+                            {**existing, **value}
+                            if isinstance(existing, dict)
+                            else value
+                        )
                 elif isinstance(value, str):
                     if value:
                         state.signals[key] = value
