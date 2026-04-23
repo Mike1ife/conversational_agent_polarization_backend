@@ -55,7 +55,6 @@ def log_turn(
             "system_prompt": system_prompt,
             "messages": [{"role": m.role, "content": m.content} for m in messages]
             + [{"role": "assistant", "content": response}],
-            "signals": dict(state.signals),
             "last_observation": state.metadata.get("last_observation"),
         }
 
