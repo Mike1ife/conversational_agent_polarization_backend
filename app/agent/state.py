@@ -58,6 +58,9 @@ def build_session_state(
         state.political_party = political_party
         if political_party:
             state.signals["political_party"] = political_party
+        saved_signals = payload.get("signals", {})
+        if isinstance(saved_signals, dict):
+            state.signals.update(saved_signals)
         # system_prompt is also in payload if needed
         state.metadata["last_observation"] = payload.get("last_observation", {})
 

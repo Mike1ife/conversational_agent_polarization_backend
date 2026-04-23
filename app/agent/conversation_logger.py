@@ -56,7 +56,6 @@ def log_turn(
             "messages": [{"role": m.role, "content": m.content} for m in messages]
             + [{"role": "assistant", "content": response}],
             "signals": dict(state.signals),
-            "last_observation": state.metadata.get("last_observation"),
         }
 
         study_id = state.metadata.get("study_id") or state.study_id
