@@ -1,15 +1,36 @@
 from __future__ import annotations
 
-import json
 import logging
 from datetime import datetime, timezone
-from pathlib import Path
 
 from app.agent.state import SessionState
-from app.db.conversation import save_turn_log
+from app.agent.safety import SafetyVerdict
+from app.db.conversation import save_turn_log, save_safety_event
 from app.llm.base import Message
 
 logger = logging.getLogger(__name__)
+
+
+def log_safety_event(
+    conversations_dir: str,
+    state: SessionState,
+    verdict: SafetyVerdict,
+) -> None:
+    """Append a safety event to a sidecar JSONL file for the session.
+
+    Separate file (`{session_id}_safety.jsonl`) keeps research transcripts
+    clean from moderation artifacts.
+    """
+    try:
+        study_id = state.metadata.get("study_id") or state.study_id
+        if study_id:
+            save_safety_event(
+                study_id=study_id,
+                verdict=verdict.to_dict(),
+            )
+
+    except Exception as e:
+        logger.warning("Failed to log safety event: %s", e)
 
 
 def log_turn(
@@ -27,17 +48,18 @@ def log_turn(
         entry = {
             "turn": state.turn_count,
             "stage": state.stage.value,
+            "stage_turn_count": state.stage_turn_count,
             "strategy": state.strategy,
             "political_party": state.political_party,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "system_prompt": system_prompt,
-            "messages": [
-                {"role": m.role, "content": m.content} for m in messages
-            ]
+            "messages": [{"role": m.role, "content": m.content} for m in messages]
             + [{"role": "assistant", "content": response}],
+            "signals": dict(state.signals),
+            "last_observation": state.metadata.get("last_observation"),
         }
 
-        study_id = state.metadata.get("study_id")
+        study_id = state.metadata.get("study_id") or state.study_id
         if study_id:
             save_turn_log(
                 study_id=study_id,

@@ -23,6 +23,21 @@ def save_turn_log(study_id: str, entry: dict):
     )
 
 
+def save_safety_event(study_id: str, verdict: dict):
+    now = datetime.now(timezone.utc)
+    conversation_docs.update_one(
+        {"study_id": study_id},
+        {
+            "$set": {
+                "verdict": verdict,
+                "updated_at": now,
+            },
+            "$setOnInsert": {"created_at": now},
+        },
+        upsert=True,
+    )
+
+
 def _coerce_messages(messages: list | None) -> list[Message]:
     history: list[Message] = []
 

@@ -5,9 +5,14 @@ import json
 import logging
 from collections.abc import AsyncIterator
 
-from app.agent.conversation_logger import log_turn
+from app.agent.conversation_logger import log_safety_event, log_turn
 from app.agent.phases import StageController
 from app.agent.prompts import OBSERVE_PROMPT, THINK_PROMPT, build_system_prompt
+from app.agent.safety import (
+    SafetyVerdict,
+    TERMINATION_REENTRY_MESSAGE,
+    evaluate_message,
+)
 from app.config import settings
 from app.agent.state import Stage, SessionState, build_session_state
 from app.agent.strategies import get_strategy
@@ -93,6 +98,20 @@ class AgentPipeline:
             }
         )
 
+    def _safety_check(self, state: SessionState, user_message: str) -> SafetyVerdict:
+        """Run the rule-based safety monitor and return a verdict.
+
+        Pure regex + heuristics — synchronous and microsecond-cheap. Does not
+        mutate state; the caller is responsible for applying the verdict.
+        """
+        return evaluate_message(
+            user_message=user_message,
+            previous_user_message=state.previous_user_message,
+            consecutive_reminders=state.consecutive_reminders,
+            indecent_count=state.indecent_count,
+            invalid_count=state.invalid_count,
+        )
+
     # Sentinel yielded during blocking pipeline work to signal keep-alive
     KEEP_ALIVE = object()
 
@@ -112,6 +131,11 @@ class AgentPipeline:
         state = build_session_state(study_id, strategy_name, messages)
         state.metadata["study_id"] = study_id
 
+        # Short-circuit any subsequent requests to an already-terminated session.
+        if state.terminated_by_safety:
+            yield TERMINATION_REENTRY_MESSAGE
+            return
+
         state.stage_turn_count += 1
 
         user_message = ""
@@ -119,6 +143,51 @@ class AgentPipeline:
             if msg.get("role") == "user":
                 user_message = msg["content"]
                 break
+
+        # --- SAFETY MONITOR ---
+        # Skip the gate when there is no user message yet (agent-initiated open).
+        if user_message:
+            verdict = self._safety_check(state, user_message)
+
+            if verdict.action == "reminder":
+                # Roll back the stage turn so a rejected turn doesn't burn a slot.
+                state.stage_turn_count = max(0, state.stage_turn_count - 1)
+                state.consecutive_reminders = verdict.consecutive_reminders
+                state.invalid_count = verdict.invalid_count
+                state.indecent_count = verdict.indecent_count
+                state.safety_history.append(verdict.to_dict())
+                state.previous_user_message = user_message
+                log_safety_event(settings.conversations_dir, state, verdict)
+                logger.info(
+                    "Safety reminder for session %s: %s (consecutive=%d)",
+                    state.session_id,
+                    verdict.reason,
+                    state.consecutive_reminders,
+                )
+                yield verdict.reminder_text
+                return
+
+            if verdict.action == "terminate":
+                state.terminated_by_safety = True
+                state.stage = Stage.COMPLETE
+                state.consecutive_reminders = verdict.consecutive_reminders
+                state.invalid_count = verdict.invalid_count
+                state.indecent_count = verdict.indecent_count
+                state.safety_history.append(verdict.to_dict())
+                state.previous_user_message = user_message
+                log_safety_event(settings.conversations_dir, state, verdict)
+                logger.info(
+                    "Safety termination for session %s: %s",
+                    state.session_id,
+                    verdict.reason,
+                )
+                yield verdict.termination_text
+                return
+
+            # Clean message — reset the consecutive-reminder streak and record this
+            # message for exact-repeat detection on the next turn.
+            state.consecutive_reminders = 0
+            state.previous_user_message = user_message
 
         # --- OBSERVE + STAGE EVALUATION ---
         if state.turn_count >= 1:

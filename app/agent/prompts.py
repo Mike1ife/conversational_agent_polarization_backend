@@ -406,7 +406,7 @@ Then thank them genuinely and end the conversation.""",
 # OBSERVE prompt — extract condition-specific signals from user message
 # ---------------------------------------------------------------------------
 
-OBSERVE_PROMPT = """You are analyzing a user message in a partisan animosity research study.
+_OBSERVE_PREFIX = """You are analyzing a user message in a partisan animosity research study.
 
 Condition: {condition}
 Current stage: {stage}
@@ -417,32 +417,64 @@ User message: "{user_message}"
 
 Extract any new information from this message and respond with a JSON object.
 
-If condition is "common_identity", extract:
+"""
+
+_OBSERVE_SUFFIX = """
+
+Only update fields where the current message provides clear new information. For boolean fields already true, keep them true."""
+
+
+OBSERVE_PROMPTS: dict[Strategy, str] = {
+    Strategy.COMMON_IDENTITY: _OBSERVE_PREFIX
+    + """Extract:
 {{
     "feeling_expressed": <true if user has expressed a genuine emotional feeling about [opposing party] supporters, else false>,
+    "user_feeling_text": "<short phrase (max 12 words) capturing how the user described their feeling toward the opposing party — e.g. 'frustrated by how extreme they've become'; null if not yet expressed>",
     "media_mentioned": <true if user mentioned news or social media as source of info about opposing party, else false>,
+    "user_media_text": "<short phrase (max 12 words) capturing what the user said about media or their sources — e.g. 'mostly gets news from Twitter and cable'; null if not yet mentioned>",
     "media_distortion_acknowledged": <true if user gestured toward the idea that media may not be representative, else false>,
     "exhausted_majority_introduced": <true if the exhausted majority data point has been delivered — either the agent shared the survey finding OR the user independently described most ordinary Americans as exhausted with division, else false>,
     "common_identity_described": <true if user has described a group of reasonable/exhausted people that crosses party lines, else false>
-}}
-
-If condition is "personal_narrative", extract:
+}}"""
+    + _OBSERVE_SUFFIX,
+    Strategy.PERSONAL_NARRATIVE: _OBSERVE_PREFIX
+    + """Extract:
 {{
     "person_label": "<the label the user chose for this person — a relationship/role label ('my uncle', 'a coworker') or a first name if the user volunteered one; null if not yet identified>",
     "person_is_real": <true if user identified a real person they know, false if imagined/hypothetical, null if unknown>,
     "person_details_count": <integer count of distinct personal details shared about the person (personality traits, things they care about, memories, daily life)>,
-    "origins_explored": <true if user has discussed or speculated about why this person holds their political views, else false>
-}}
-
-If condition is "misperception_correction", extract:
+    "origins_explored": <true if user has discussed or speculated about why this person holds their political views, else false>,
+    "person_traits": <list of personality trait strings the user has mentioned (e.g. ["stubborn", "caring", "funny"]); empty list if none yet>,
+    "person_cares_about": <list of things the person cares about, as short phrases (e.g. ["his family", "job security", "church"]); empty list if none yet>,
+    "person_memories": <list of specific memories or anecdotes the user shared about this person (e.g. ["we argued at Thanksgiving", "he helped me move"]); empty list if none yet>,
+    "person_political_origin": "<one or two sentences summarizing why the user thinks this person holds their political views; null if not yet discussed>"
+}}"""
+    + _OBSERVE_SUFFIX,
+    Strategy.CONTROL: _OBSERVE_PREFIX
+    + """Extract:
+{{
+    "topics_shared": <list of short phrases (max 8 words each) summarizing distinct things the user has mentioned being on their mind or experiencing — e.g. ["stressed about work", "feeling disconnected from friends"]; accumulate across turns, empty list if nothing yet>,
+    "current_mood": "<one short phrase capturing the overall mood or feeling the user has conveyed most recently — e.g. 'tired but okay', 'anxious about the future'; null if not yet clear>"
+}}"""
+    + _OBSERVE_SUFFIX,
+    Strategy.CONTROL_POLITICS: _OBSERVE_PREFIX
+    + """Extract:
+{{
+    "topics_shared": <list of short phrases (max 8 words each) summarizing distinct political topics or concerns the user has raised — e.g. ["worried about the economy", "frustrated with both parties"]; accumulate across turns, empty list if nothing yet>,
+    "current_mood": "<one short phrase capturing the overall tone or sentiment the user has conveyed most recently — e.g. 'cynical about politicians', 'cautiously hopeful'; null if not yet clear>"
+}}"""
+    + _OBSERVE_SUFFIX,
+    Strategy.MISPERCEPTION_CORRECTION: _OBSERVE_PREFIX
+    + """Extract:
 {{
     "intro_completed": <true if the agent has delivered the introduction framing and the user has agreed to proceed, else false>,
     "questions_answered": <integer count of quiz questions for which the user has provided a Likert response AND the agent has revealed the survey finding — increment only after both halves are complete>,
     "question_answers": <dict mapping question ID to the user's numeric choice — e.g. {{"q3": 2}} if the user just answered question 3 with option 2 (probably not). Infer the current question ID as "q{{questions_answered + 1}}". Map text answers: never→1, probably not→2, probably→3, definitely→4. Only include the key for the question just answered; omit keys for unanswered questions. Return {{}} if no new answer was given this turn.>,
     "reflection_shared": <true if the user has shared their overall reaction after all 8 questions, else false>
-}}
-
-Only update fields where the current message provides clear new information. For boolean fields already true, keep them true. For questions_answered, never decrease the value."""
+}}"""
+    + _OBSERVE_SUFFIX
+    + " For questions_answered, never decrease the value.",
+}
 
 # ---------------------------------------------------------------------------
 # THINK prompt — internal reasoning before generating a response

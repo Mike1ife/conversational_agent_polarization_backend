@@ -27,6 +27,15 @@ class SessionState:
     memory: list[dict] = field(default_factory=list)
     turn_count: int = 0
     metadata: dict = field(default_factory=dict)
+    consecutive_reminders: int = (
+        0  # streak of consecutive reminders; resets on clean message
+    )
+    # --- Safety monitor state (see app/agent/safety.py) ---
+    invalid_count: int = 0  # lifetime gibberish tally (logging only)
+    indecent_count: int = 0  # lifetime indecent tally (logging only)
+    terminated_by_safety: bool = False  # short-circuit flag for re-entry
+    safety_history: list[dict] = field(default_factory=list)
+    previous_user_message: str | None = None  # for exact-repeat detection
 
 
 def build_session_state(
@@ -51,6 +60,17 @@ def build_session_state(
             state.signals["political_party"] = political_party
         # system_prompt is also in payload if needed
         state.metadata["last_observation"] = payload.get("last_observation", {})
+
+    verdict = (conversation or {}).get("verdict")
+    if isinstance(verdict, dict):
+        state.consecutive_reminders = verdict.get("consecutive_reminders", 0)
+        state.indecent_count = verdict.get("indecent_count", 0)
+        state.invalid_count = verdict.get("invalid_count", 0)
+        state.safety_history.append(verdict)
+
+        if verdict.get("action") == "terminate":
+            state.terminated_by_safety = True
+            state.stage = Stage.COMPLETE
 
     # Count turns from messages
     state.turn_count = sum(1 for m in messages if m.get("role") == "user")
