@@ -67,7 +67,13 @@ def get_chat_history(study_id: str) -> list:
 
 def _get_misperception_correction_observation(signals: dict) -> MCObservation:
     question_answers = signals.get("question_answers", {})
-    return MCObservation(answers=list(question_answers.values()))
+    # Sort by question number (q1, q2, ..., q8) to ensure answer order matches question order
+    sorted_keys = sorted(
+        question_answers.keys(),
+        key=lambda k: int(k[1:]) if k.startswith("q") and k[1:].isdigit() else 999,
+    )
+    answers = [question_answers[k] for k in sorted_keys if k in question_answers]
+    return MCObservation(answers=answers)
 
 
 strategy_observation = {
