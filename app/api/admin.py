@@ -57,7 +57,7 @@ def delete_all_users_route(request: AdminRequest):
 
 
 @router.delete("/delete/{study_id}")
-def delete_all_users_route(study_id: str, request: AdminRequest):
+def delete_user_route(study_id: str, request: AdminRequest):
     """Delete one user and associated conversations/messages by study_id."""
     if request.password != admin_password:
         raise HTTPException(status_code=403, detail="Invalid admin password")
