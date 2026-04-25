@@ -1,6 +1,13 @@
 from datetime import datetime, timezone
 
-from app.schema import Message, MCObservation, ChatObservation
+from app.agent.survey_data import COMMON_IDENTITY_DATA_CARD, QUIZ_QUESTIONS
+from app.schema import (
+    Message,
+    CIObservation,
+    MCObservation,
+    ChatObservation,
+    QuizQuestion,
+)
 from app.db.documents import conversation_docs
 
 
@@ -65,19 +72,47 @@ def get_chat_history(study_id: str) -> list:
     return _coerce_messages(messages)
 
 
+def _get_common_identity_observation(signals: dict) -> CIObservation:
+    show_survey = bool(signals.get("exhausted_majority_introduced"))
+    survey_text = COMMON_IDENTITY_DATA_CARD
+    user_feeling_text = signals.get("user_feeling_text")
+    user_media_text = signals.get("user_media_text")
+    return CIObservation(
+        show_survey=show_survey,
+        survey_text=survey_text,
+        user_feeling_text=user_feeling_text,
+        user_media_text=user_media_text,
+    )
+
+
 def _get_misperception_correction_observation(signals: dict) -> MCObservation:
     question_answers = signals.get("question_answers", {})
-    # Sort by question number (q1, q2, ..., q8) to ensure answer order matches question order
-    sorted_keys = sorted(
-        question_answers.keys(),
-        key=lambda k: int(k[1:]) if k.startswith("q") and k[1:].isdigit() else 999,
-    )
-    answers = [question_answers[k] for k in sorted_keys if k in question_answers]
-    return MCObservation(answers=answers)
+    questions: list[QuizQuestion] = []
+
+    for question in QUIZ_QUESTIONS:
+        question_id = question.get("id")
+        if question_id not in question_answers:
+            continue
+
+        try:
+            user_answer = int(question_answers[question_id])
+        except (TypeError, ValueError):
+            continue
+
+        questions.append(
+            QuizQuestion(
+                label=question.get("label"),
+                user_answer=user_answer,
+                survey_average=question.get("survey_average"),
+            )
+        )
+
+    return MCObservation(questions=questions)
 
 
 strategy_observation = {
-    "misperception_correction": _get_misperception_correction_observation
+    "common_identity": _get_common_identity_observation,
+    "misperception_correction": _get_misperception_correction_observation,
 }
 
 

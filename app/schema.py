@@ -130,9 +130,22 @@ class ChatCompletionRequest(CaseModel):
     max_tokens: Optional[int] = None
 
 
+class CIObservation(CaseModel):
+    show_survey: bool
+    survey_text: str
+    user_feeling_text: Optional[str] = None
+    user_media_text: Optional[str] = None
+
+
+class QuizQuestion(CaseModel):
+    label: str
+    user_answer: int
+    survey_average: float
+
+
 class MCObservation(CaseModel):
-    answers: list[int]
+    questions: list[QuizQuestion]
 
 
 class ChatObservation(CaseModel):
-    observation: Union[MCObservation]
+    observation: Union[CIObservation, MCObservation]
