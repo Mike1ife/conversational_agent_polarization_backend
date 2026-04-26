@@ -4,6 +4,7 @@ from app.agent.survey_data import COMMON_IDENTITY_DATA_CARD, QUIZ_QUESTIONS
 from app.schema import (
     Message,
     CIObservation,
+    PNObservation,
     MCObservation,
     ChatObservation,
     QuizQuestion,
@@ -85,6 +86,21 @@ def _get_common_identity_observation(signals: dict) -> CIObservation:
     )
 
 
+def _get_personal_narrative_observation(signals: dict) -> PNObservation:
+    person_label = signals.get("person_label")
+    person_traits = signals.get("person_traits", [])
+    person_cares_about = signals.get("person_cares_about", [])
+    person_memories = signals.get("person_memories", [])
+    person_political_origin = signals.get("person_political_origin")
+    return PNObservation(
+        person_label=person_label,
+        person_traits=person_traits,
+        person_cares_about=person_cares_about,
+        person_memories=person_memories,
+        person_political_origin=person_political_origin,
+    )
+
+
 def _get_misperception_correction_observation(signals: dict) -> MCObservation:
     question_answers = signals.get("question_answers", {})
     questions: list[QuizQuestion] = []
@@ -112,6 +128,7 @@ def _get_misperception_correction_observation(signals: dict) -> MCObservation:
 
 strategy_observation = {
     "common_identity": _get_common_identity_observation,
+    "personal_narrative": _get_personal_narrative_observation,
     "misperception_correction": _get_misperception_correction_observation,
 }
 

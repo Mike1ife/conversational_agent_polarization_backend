@@ -133,8 +133,16 @@ class ChatCompletionRequest(CaseModel):
 class CIObservation(CaseModel):
     show_survey: bool
     survey_text: str
-    user_feeling_text: Optional[str] = None
-    user_media_text: Optional[str] = None
+    user_feeling_text: str
+    user_media_text: str
+
+
+class PNObservation(CaseModel):
+    person_label: str
+    person_traits: list[str]
+    person_cares_about: list[str]
+    person_memories: list[str]
+    person_political_origin: str
 
 
 class QuizQuestion(CaseModel):
@@ -148,4 +156,4 @@ class MCObservation(CaseModel):
 
 
 class ChatObservation(CaseModel):
-    observation: Union[CIObservation, MCObservation]
+    observation: Union[CIObservation, PNObservation, MCObservation]
